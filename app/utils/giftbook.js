@@ -1,48 +1,47 @@
-﻿/* eslint-disable */
+/* eslint-disable */
 // @ts-nocheck
 export function bootGiftBookApp() {
-
       /**
-       * 搴旂敤閰嶇疆甯搁噺
-       * 闆嗕腑绠＄悊鎵€鏈夊叏灞€閰嶇疆鍙傛暟锛屼究浜庣粺涓€缁存姢鍜岃皟鏁?
+       * 应用配置常量
+       * 集中管理所有全局配置参数，便于统一维护和调整
        */
       const CONFIG = {
         /**
-         * 姣忛〉鏄剧ず鐨勭ぜ閲戣褰曟暟閲?
-         * 褰卞搷锛?
-         * - 涓荤晫闈㈢ぜ绨挎樉绀?
-         * - 鎵撳嵃PDF姣忛〉瀹归噺
-         * - 鍒嗛〉瀵艰埅璁＄畻
+         * 每页显示的礼金记录数量
+         * 影响：
+         * - 主界面礼簿显示
+         * - 打印PDF每页容量
+         * - 分页导航计算
          */
         ITEMS_PER_PAGE: 12,
 
         /**
-         * 绀肩翱灏侀潰鍥炬渶澶ф枃浠跺ぇ灏忥紙2MB锛?
-         * 瓒呰繃姝ゅぇ灏忕殑鍥剧墖灏嗚鎷掔粷涓婁紶
-         * 鍘熷洜锛氶伩鍏?IndexedDB 瀛樺偍鍘嬪姏鍜屾墦鍗版€ц兘闂
+         * 礼簿封面图最大文件大小（2MB）
+         * 超过此大小的图片将被拒绝上传
+         * 原因：避免 IndexedDB 存储压力和打印性能问题
          */
         MAX_COVER_SIZE: 2 * 1024 * 1024,
 
         /**
-         * 鎵撳嵃鍒嗘壒闃堝€硷紙1008 鏉¤褰?= 84 椤碉級
-         * 瓒呰繃姝ゆ暟閲忓皢鍚敤鍒嗘壒鎵撳嵃妯″紡
-         * 鍘熷洜锛?
-         * - 闃叉娴忚鍣ㄦ覆鏌撳ぇ閲?DOM 瀵艰嚧鍗℃
-         * - 閬垮厤鍐呭瓨婧㈠嚭
-         * - 鎻愰珮鎵撳嵃鎴愬姛鐜?
-         * 鍚屾椂鐢ㄤ簬 GridJS 琛ㄦ牸鍒嗛〉鍒ゆ柇
+         * 打印分批阈值（1008 条记录 = 84 页）
+         * 超过此数量将启用分批打印模式
+         * 原因：
+         * - 防止浏览器渲染大量 DOM 导致卡死
+         * - 避免内存溢出
+         * - 提高打印成功率
+         * 同时用于 GridJS 表格分页判断
          */
         PRINT_SPLIT_THRESHOLD: 1008,
-        APP_NAME: "鐢靛瓙绀肩翱绯荤粺 - 涓撲笟鐗?,
+        APP_NAME: "电子礼簿系统 - 专业版",
         DB_NAME: "GiftRegistryDB",
         DB_VERSION: 1,
         /**
-         * 瀹惧绛夌骇绯荤粺閰嶇疆
-         * 浣跨敤鏁扮粍瀛樺偍绛夌骇鍚嶇О锛岀储寮曞嵆涓虹瓑绾ф潈閲嶏紙鐢ㄤ簬鎺掑簭锛?
-         * 绱㈠紩瓒婂ぇ锛岀瓑绾ц秺楂橈紝鍦ㄦ墦鍗?瀵煎嚭鏃舵帓鍚嶈秺闈犲墠
-         * 绱㈠紩鑼冨洿锛?-4
+         * 宾客等级系统配置
+         * 使用数组存储等级名称，索引即为等级权重（用于排序）
+         * 索引越大，等级越高，在打印/导出时排名越靠前
+         * 索引范围：0-4
          */
-        GUEST_LEVELS: ["鏅", ...Array.from({ length: 100 }, (_, index) => `鎺掑簭${100 - index}`)],
+        GUEST_LEVELS: ["普宾", ...Array.from({ length: 100 }, (_, index) => `排序${100 - index}`)],
         PASSWORD_CACHE_DURATION: 5,
       };
 
@@ -57,14 +56,14 @@ export function bootGiftBookApp() {
       });
 
       /**
-       * 宸ュ叿绫?- 鎻愪緵閫氱敤宸ュ叿鏂规硶
-       * 闆嗕腑绠＄悊鏁版嵁鏍煎紡鍖栥€佽浆鎹㈢瓑閫氱敤鍔熻兘
+       * 工具类 - 提供通用工具方法
+       * 集中管理数据格式化、转换等通用功能
        */
       class Utils {
         /**
-         * 鏍煎紡鍖栭噾棰濅负浜烘皯甯佹牸寮?
-         * @param {number} amount - 閲戦鏁板€?
-         * @returns {string} 鏍煎紡鍖栧悗鐨勫瓧绗︿覆锛屽 "锟?,234.56"
+         * 格式化金额为人民币格式
+         * @param {number} amount - 金额数值
+         * @returns {string} 格式化后的字符串，如 "￥1,234.56"
          */
         static formatCurrency(amount) {
           return new Intl.NumberFormat("zh-CN", {
@@ -74,53 +73,53 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 灏嗘暟瀛楅噾棰濊浆鎹负涓枃澶у啓閲戦
-         * @param {number|string} n - 瑕佽浆鎹㈢殑閲戦
-         * @returns {string} 涓枃澶у啓閲戦瀛楃涓?
+         * 将数字金额转换为中文大写金额
+         * @param {number|string} n - 要转换的金额
+         * @returns {string} 中文大写金额字符串
          * @example
          */
         static amountToChinese(n) {
           if (typeof n !== "number" && typeof n !== "string") return "";
           n = parseFloat(n);
           if (isNaN(n) || n === null) return "";
-          if (n === 0) return "闆跺厓鏁?;
+          if (n === 0) return "零元整";
 
-          let unit = "浜嚎涓囦粺浣版嬀鍏嗕竾浠熶桨鎷句嚎浠熶桨鎷句竾浠熶桨鎷惧厓瑙掑垎";
+          let unit = "京亿万仟佰拾兆万仟佰拾亿仟佰拾万仟佰拾元角分";
           let str = "";
           let s = n.toString();
 
           if (s.indexOf(".") > -1) s = (n * 100).toFixed(0);
           else s += "00";
 
-          if (s.length > unit.length) return "閲戦杩囧ぇ";
+          if (s.length > unit.length) return "金额过大";
           unit = unit.substr(unit.length - s.length);
 
           for (let i = 0; i < s.length; i++) {
-            str += "闆跺９璐板弫鑲嗕紞闄嗘煉鎹岀帠".charAt(s.charAt(i)) + unit.charAt(i);
+            str += "零壹贰叁肆伍陆柒捌玖".charAt(s.charAt(i)) + unit.charAt(i);
           }
 
           return str
-            .replace(/闆?浠焲浣皘鎷緗瑙?/g, "闆?)
-            .replace(/(闆?+/g, "闆?)
-            .replace(/闆?鍏唡涓噟浜縷鍏?/g, "$1")
-            .replace(/(鍏唡浜?涓?g, "$1")
-            .replace(/(浜瑋鍏?浜?g, "$1")
-            .replace(/(浜?鍏?g, "$1")
-            .replace(/(浜?涓?g, "$1")
-            .replace(/(浜瑋鍏唡浜縷浠焲浣皘鎷?(涓?)(.)/g, "$1$2$3")
-            .replace(/闆跺厓/g, "鍏?)
-            .replace(/闆跺垎/g, "")
-            .replace(/闆惰/g, "闆?)
-            .replace(/鍏?/g, "鍏冩暣")
-            .replace(/瑙?/g, "瑙掓暣");
+            .replace(/零(仟|佰|拾|角)/g, "零")
+            .replace(/(零)+/g, "零")
+            .replace(/零(兆|万|亿|元)/g, "$1")
+            .replace(/(兆|亿)万/g, "$1")
+            .replace(/(京|兆)亿/g, "$1")
+            .replace(/(京)兆/g, "$1")
+            .replace(/(亿)万/g, "$1")
+            .replace(/(京|兆|亿|仟|佰|拾)(万?)(.)/g, "$1$2$3")
+            .replace(/零元/g, "元")
+            .replace(/零分/g, "")
+            .replace(/零角/g, "零")
+            .replace(/元$/g, "元整")
+            .replace(/角$/g, "角整");
         }
 
         /**
-         * 灏嗘枃浠惰鍙栦负 Base64 缂栫爜瀛楃涓?
-         * @param {File} file - 瑕佽鍙栫殑鏂囦欢瀵硅薄
-         * @returns {Promise<string>} Base64 缂栫爜鐨勬暟鎹?URL锛堝寘鍚?data:image/...;base64, 鍓嶇紑锛?
-         * @throws {Error} 鏂囦欢璇诲彇澶辫触鏃舵姏鍑洪敊璇?
-         * 鐢ㄩ€旓細灏嗙ぜ绨垮皝闈㈠浘瀛樺偍鍒?IndexedDB
+         * 将文件读取为 Base64 编码字符串
+         * @param {File} file - 要读取的文件对象
+         * @returns {Promise<string>} Base64 编码的数据 URL（包含 data:image/...;base64, 前缀）
+         * @throws {Error} 文件读取失败时抛出错误
+         * 用途：将礼簿封面图存储到 IndexedDB
          */
         static async readFileAsBase64(file) {
           return new Promise((resolve, reject) => {
@@ -132,12 +131,12 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 鑾峰彇褰撳墠鏃ユ湡鏃堕棿鐨勬牸寮忓寲瀛楃涓?
-         * @returns {{date: string, time: string}} 鍖呭惈 date 鍜?time 鐨勫璞?
+         * 获取当前日期时间的格式化字符串
+         * @returns {{date: string, time: string}} 包含 date 和 time 的对象
          * @example
          *   Utils.getCurrentDateTime()
          *   // => { date: "2025-10-12", time: "14:30" }
-         * 鐢ㄩ€旓細涓哄垱寤轰簨椤硅〃鍗曡缃粯璁ゆ椂闂?
+         * 用途：为创建事项表单设置默认时间
          */
         static getCurrentDateTime() {
           const now = new Date();
@@ -154,7 +153,7 @@ export function bootGiftBookApp() {
           if (Number.isNaN(date.getTime())) {
             return { date, formattedDisplay: "", localeDate: "" };
           }
-          const formattedDisplay = `${date.getFullYear()}骞?{date.getMonth() + 1}鏈?{date.getDate()}鏃;
+          const formattedDisplay = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
           return {
             date,
             formattedDisplay,
@@ -163,7 +162,7 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 鐢熸垚鐢ㄤ簬鏂囦欢鍚嶇殑鏃堕棿鎴?
+         * 生成用于文件名的时间戳
          * @param {Date} date
          * @returns {string} yyyy-mm-dd hh:mm:ss
          */
@@ -176,48 +175,48 @@ export function bootGiftBookApp() {
          * @returns {boolean}
          */
         static isMobile() {
-          // 涓€涓€氱敤涓斿彲闈犵殑绉诲姩璁惧妫€娴嬫柟娉?
+          // 一个通用且可靠的移动设备检测方法
           return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
         }
       }
 
       /**
-       * 鍔犲瘑绠＄悊鍣?- 澶勭悊鎵€鏈夊姞瀵嗙浉鍏虫搷浣?
-       * 浣跨敤 CryptoJS 搴撳疄鐜?AES 鍔犲瘑鍜?SHA-256 鍝堝笇
-       * 鐢ㄩ€旓細淇濇姢绀奸噾鏁版嵁鐨勯殣绉佹€у拰瀹屾暣鎬?
+       * 加密管理器 - 处理所有加密相关操作
+       * 使用 CryptoJS 库实现 AES 加密和 SHA-256 哈希
+       * 用途：保护礼金数据的隐私性和完整性
        */
       class CryptoService {
         /**
-         * 鍔犲瘑鏁版嵁 - 浣跨敤 AES 瀵圭О鍔犲瘑绠楁硶
-         * @param {Object} data - 瑕佸姞瀵嗙殑鏁版嵁瀵硅薄锛堜細鍏堣浆涓篔SON瀛楃涓诧級
-         * @param {string} key - 鍔犲瘑瀵嗛挜锛堢敤鎴疯緭鍏ョ殑瀵嗙爜锛?
-         * @returns {string} 鍔犲瘑鍚庣殑瀵嗘枃瀛楃涓?
+         * 加密数据 - 使用 AES 对称加密算法
+         * @param {Object} data - 要加密的数据对象（会先转为JSON字符串）
+         * @param {string} key - 加密密钥（用户输入的密码）
+         * @returns {string} 加密后的密文字符串
          */
         static encrypt(data, key) {
           return CryptoJS.AES.encrypt(JSON.stringify(data), key).toString();
         }
 
         /**
-         * 瑙ｅ瘑鏁版嵁 - 浣跨敤 AES 瀵圭О瑙ｅ瘑绠楁硶
-         * @param {string} ciphertext - 瀵嗘枃瀛楃涓?
-         * @param {string} key - 瑙ｅ瘑瀵嗛挜锛堝繀椤讳笌鍔犲瘑鏃剁殑瀵嗛挜涓€鑷达級
-         * @returns {Object|null} 瑙ｅ瘑鍚庣殑鏁版嵁瀵硅薄锛屽け璐ユ椂杩斿洖 null
+         * 解密数据 - 使用 AES 对称解密算法
+         * @param {string} ciphertext - 密文字符串
+         * @param {string} key - 解密密钥（必须与加密时的密钥一致）
+         * @returns {Object|null} 解密后的数据对象，失败时返回 null
          */
         static decrypt(ciphertext, key) {
           try {
             const bytes = CryptoJS.AES.decrypt(ciphertext, key);
             return JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
           } catch (e) {
-            console.error("瑙ｅ瘑澶辫触:", e);
-            return null; // 瀵嗛挜閿欒鎴栨暟鎹崯鍧忔椂杩斿洖null
+            console.error("解密失败:", e);
+            return null; // 密钥错误或数据损坏时返回null
           }
         }
 
         /**
-         * 鍝堝笇瀵嗙爜 - 浣跨敤 SHA-256 鍗曞悜鍝堝笇绠楁硶
-         * @param {string} password - 鍘熷瀵嗙爜
-         * @returns {string} 鍝堝笇鍊硷紙鐢ㄤ簬瀵嗙爜楠岃瘉锛屼笉鍙€嗭級
-         * 娉ㄦ剰锛氬搱甯屽€煎瓨鍌ㄥ湪鏁版嵁搴撲腑锛岀敤浜庨獙璇佸瘑鐮佽€屼笉瀛樺偍鏄庢枃
+         * 哈希密码 - 使用 SHA-256 单向哈希算法
+         * @param {string} password - 原始密码
+         * @returns {string} 哈希值（用于密码验证，不可逆）
+         * 注意：哈希值存储在数据库中，用于验证密码而不存储明文
          */
         static hash(password) {
           return CryptoJS.SHA256(password).toString();
@@ -225,22 +224,22 @@ export function bootGiftBookApp() {
       }
 
       /**
-       * 鏁版嵁搴撶鐞嗗櫒 - IndexedDB 灏佽
-       * 鎻愪緵瀵规祻瑙堝櫒鏈湴鏁版嵁搴撶殑缁熶竴鎿嶄綔鎺ュ彛
-       * 瀛樺偍缁撴瀯锛?
-       *   - events: 浜嬮」淇℃伅锛堝寘鍚悕绉般€佹椂闂淬€佸瘑鐮佸搱甯屻€佷富棰樼瓑锛?
-       *   - gifts: 绀奸噾璁板綍锛堝寘鍚姞瀵嗘暟鎹拰鍏宠仈鐨勪簨椤笽D锛?
+       * 数据库管理器 - IndexedDB 封装
+       * 提供对浏览器本地数据库的统一操作接口
+       * 存储结构：
+       *   - events: 事项信息（包含名称、时间、密码哈希、主题等）
+       *   - gifts: 礼金记录（包含加密数据和关联的事项ID）
        */
       class DBManager {
         /**
          */
         constructor() {
-          this.db = null; // IndexedDB 鏁版嵁搴撹繛鎺ュ璞?
+          this.db = null; // IndexedDB 数据库连接对象
         }
 
         /**
-         * 鍒濆鍖栨暟鎹簱 - 鎵撳紑鎴栧垱寤?IndexedDB 鏁版嵁搴?
-         * @returns {Promise<void>} 鍒濆鍖栧畬鎴愬悗 resolve
+         * 初始化数据库 - 打开或创建 IndexedDB 数据库
+         * @returns {Promise<void>} 初始化完成后 resolve
          */
         async init() {
           return new Promise((resolve, reject) => {
@@ -250,21 +249,21 @@ export function bootGiftBookApp() {
 
             request.onsuccess = () => {
               this.db = request.result;
-              // 鍒濆鍖栨垚鍔熷悗锛岀洿鎺?resolve 鍗冲彲锛屾棤闇€杩斿洖浠讳綍淇℃伅
+              // 初始化成功后，直接 resolve 即可，无需返回任何信息
               resolve();
             };
 
-            // 鏁版嵁搴撳崌绾т簨浠?- 浠呭湪棣栨鍒涘缓鏁版嵁搴撴椂瑙﹀彂
+            // 数据库升级事件 - 仅在首次创建数据库时触发
             request.onupgradeneeded = (event) => {
               const db = event.target.result;
-              console.log("棣栨鍒涘缓鏁版嵁搴擄紝鐗堟湰:", db.version);
+              console.log("首次创建数据库，版本:", db.version);
 
-              // 1. 鍒涘缓 events 琛?
+              // 1. 创建 events 表
               if (!db.objectStoreNames.contains("events")) {
                 db.createObjectStore("events", { keyPath: "id", autoIncrement: true });
               }
 
-              // 2. 鍒涘缓 gifts 琛ㄥ苟寤虹珛鎵€鏈夐渶瑕佺殑绱㈠紩
+              // 2. 创建 gifts 表并建立所有需要的索引
               if (!db.objectStoreNames.contains("gifts")) {
                 const giftStore = db.createObjectStore("gifts", { keyPath: "id", autoIncrement: true });
                 giftStore.createIndex("eventId", "eventId", { unique: false });
@@ -275,18 +274,18 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 鏍规嵁澶嶅悎绱㈠紩杩涜鎺掑簭鏌ヨ
-         * @param {string} storeName 琛ㄥ悕
-         * @param {string} indexName 绱㈠紩鍚?
-         * @param {*} key1 澶嶅悎绱㈠紩鐨勭涓€涓敭 (eventId)
-         * @returns {Promise<Array>} 鎺掑簭鍚庣殑缁撴灉鏁扮粍
+         * 根据复合索引进行排序查询
+         * @param {string} storeName 表名
+         * @param {string} indexName 索引名
+         * @param {*} key1 复合索引的第一个键 (eventId)
+         * @returns {Promise<Array>} 排序后的结果数组
          *
-         * 鎺掑簭閫昏締锛堢敱 IndexedDB 绱㈠紩鑷姩瀹屾垚锛?
-         * 1. 鎸?guestLevelWeight 闄嶅簭 (绛夌骇楂樼殑鍦ㄥ墠)
-         * 2. 鐩稿悓绛夌骇鍐呮寜 levelUpdateTime 闄嶅簭 (淇敼杩囩瓑绾х殑鍦ㄥ墠锛? 鎺掑湪鍚?
-         * 3. levelUpdateTime 鐩稿悓鏃舵寜 id 鍗囧簭 (褰曞叆椤哄簭)
+         * 排序逻辆（由 IndexedDB 索引自动完成）:
+         * 1. 按 guestLevelWeight 降序 (等级高的在前)
+         * 2. 相同等级内按 levelUpdateTime 降序 (修改过等级的在前，0 排在后)
+         * 3. levelUpdateTime 相同时按 id 升序 (录入顺序)
          *
-         * 娉ㄦ剰锛氫负浜嗗疄鐜伴檷搴忥紝闇€瑕佸湪鍐呭瓨涓繘琛屾帓搴忥紝鍥犱负 IndexedDB 绱㈠紩鍙敮鎸佸崌搴?
+         * 注意：为了实现降序，需要在内存中进行排序，因为 IndexedDB 索引只支持升序
          */
         async getAllByCompoundIndex(storeName, indexName, key1) {
           const transaction = this.db.transaction(storeName, "readonly");
@@ -295,7 +294,7 @@ export function bootGiftBookApp() {
 
           return new Promise((resolve, reject) => {
             const results = [];
-            // 浣跨敤娓告爣閬嶅巻锛屽彧鑾峰彇鍖归厤 eventId 鐨勮褰?
+            // 使用游标遍历，只获取匹配 eventId 的记录
             const range = IDBKeyRange.bound([key1, -Infinity, -Infinity, -Infinity], [key1, Infinity, Infinity, Infinity]);
 
             const request = index.openCursor(range);
@@ -306,19 +305,19 @@ export function bootGiftBookApp() {
                 results.push(cursor.value);
                 cursor.continue();
               } else {
-                // 鎺掑簭锛氱瓑绾ч檷搴?-> levelUpdateTime 闄嶅簭 -> id 鍗囧簭
-                // 娉ㄦ剰锛氳繖閲屽繀椤绘帓搴忥紝鍥犱负 IndexedDB 绱㈠紩鍙兘鍗囧簭锛屾垜浠渶瑕侀檷搴?
+                // 排序：等级降序 -> levelUpdateTime 降序 -> id 升序
+                // 注意：这里必须排序，因为 IndexedDB 索引只能升序，我们需要降序
                 results.sort((a, b) => {
                   const weightDiff = (b.guestLevelWeight || 0) - (a.guestLevelWeight || 0);
                   if (weightDiff !== 0) return weightDiff;
 
-                  // levelUpdateTime 闄嶅簭锛? 鎺掑湪鏈€鍚庯級
+                  // levelUpdateTime 降序（0 排在最后）
                   const aTime = a.levelUpdateTime || 0;
                   const bTime = b.levelUpdateTime || 0;
                   const timeDiff = bTime - aTime;
                   if (timeDiff !== 0) return timeDiff;
 
-                  // id 鍗囧簭锛堝綍鍏ラ『搴忥級
+                  // id 升序（录入顺序）
                   return (a.id || 0) - (b.id || 0);
                 });
                 resolve(results);
@@ -403,7 +402,7 @@ export function bootGiftBookApp() {
       }
 
       /**
-       * UI绠＄悊鍣?- DOM鎿嶄綔灏佽
+       * UI管理器 - DOM操作封装
        */
       class UIManager {
         constructor() {
@@ -471,26 +470,26 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 鏄剧ず妯℃€佸璇濇 - 缁熶竴鐨勫脊绐楁樉绀烘帴鍙?
-         * @param {string} title - 瀵硅瘽妗嗘爣棰橈紙鏀寔HTML锛?
-         * @param {string} content - 瀵硅瘽妗嗗唴瀹癸紙鏀寔HTML锛?
-         * @param {Array<Object>} actions - 鎸夐挳鏁扮粍锛屾瘡涓厓绱犲寘鍚細
-         *   - text: 鎸夐挳鏂囧瓧
-         *   - class: CSS绫诲悕
-         *   - handler: 鐐瑰嚮鍥炶皟鍑芥暟
-         *   - keepOpen: 鏄惁淇濇寔寮圭獥鎵撳紑锛堥粯璁ゅ叧闂級
-         *   - id: 鍙€夛紝鎸夐挳ID
-         *   - role: 鍙€夛紝鎸夐挳瑙掕壊锛坧rimary/secondary锛夈€傞粯璁ゆ渶鍚庝竴涓负 primary
+         * 显示模态对话框 - 统一的弹窗显示接口
+         * @param {string} title - 对话框标题（支持HTML）
+         * @param {string} content - 对话框内容（支持HTML）
+         * @param {Array<Object>} actions - 按钮数组，每个元素包含：
+         *   - text: 按钮文字
+         *   - class: CSS类名
+         *   - handler: 点击回调函数
+         *   - keepOpen: 是否保持弹窗打开（默认关闭）
+         *   - id: 可选，按钮ID
+         *   - role: 可选，按钮角色（primary/secondary）。默认最后一个为 primary
          */
         showModal(title, content, actions = []) {
-          // 璁剧疆瀵硅瘽妗嗗唴瀹?
+          // 设置对话框内容
           this.elements.modalTitle.innerHTML = title;
           this.elements.modalContent.innerHTML = content;
-          // 纭繚鎸夐挳鍖哄煙鍙锛堥槻姝㈣鍏堝墠娴佺▼闅愯棌锛?
+          // 确保按钮区域可见（防止被先前流程隐藏）
           this.elements.modalActions.classList.remove("hidden");
-          this.elements.modalActions.innerHTML = ""; // 娓呯┖鏃ф寜閽槻姝㈤噸澶?
+          this.elements.modalActions.innerHTML = ""; // 清空旧按钮防止重复
 
-          // 鍔ㄦ€佸垱寤烘寜閽?
+          // 动态创建按钮
           let primaryButton = null;
           actions.forEach((action, idx) => {
             const button = document.createElement("button");
@@ -500,18 +499,18 @@ export function bootGiftBookApp() {
             const role = action.role || (idx === actions.length - 1 ? "primary" : "secondary");
             button.dataset.role = role;
             button.onclick = () => {
-              action.handler?.(); // 鎵ц鍥炶皟锛堝鏋滃瓨鍦級
-              if (!action.keepOpen) this.closeModal(); // 闄ら潪鎸囧畾淇濇寔鎵撳紑锛屽惁鍒欒嚜鍔ㄥ叧闂?
+              action.handler?.(); // 执行回调（如果存在）
+              if (!action.keepOpen) this.closeModal(); // 除非指定保持打开，否则自动关闭
             };
             if (role === "primary") primaryButton = button;
             this.elements.modalActions.appendChild(button);
           });
 
-          // 鏄剧ず瀵硅瘽妗嗗苟閿佸畾鑳屾櫙婊氬姩
+          // 显示对话框并锁定背景滚动
           this.elements.modalContainer.classList.remove("hidden");
           document.body.style.overflow = "hidden";
 
-          // 灏嗙劍鐐归粯璁よ缃埌涓绘搷浣滄寜閽紝閬垮厤鍥炶溅瑙﹀彂鍙栨秷
+          // 将焦点默认设置到主操作按钮，避免回车触发取消
           if (primaryButton) setTimeout(() => primaryButton.focus(), 10);
         }
 
@@ -556,7 +555,7 @@ export function bootGiftBookApp() {
       }
 
       /**
-       * 鏁版嵁缃戝叧 - 灏佽 DBManager 鐨勪笟鍔＄骇璁块棶鎺ュ彛
+       * 数据网关 - 封装 DBManager 的业务级访问接口
        */
       class GiftRepository {
         /**
@@ -649,7 +648,7 @@ export function bootGiftBookApp() {
           try {
             return JSON.parse(stored);
           } catch (error) {
-            console.error("浼氳瘽璇诲彇澶辫触", error);
+            console.error("会话读取失败", error);
             sessionStorage.removeItem(this.storageKey);
             return null;
           }
@@ -702,7 +701,7 @@ export function bootGiftBookApp() {
             const expireTime = Date.now() + this.durationMinutes * 60 * 1000;
             localStorage.setItem(this._key(eventId), JSON.stringify({ encrypted, expireTime }));
           } catch (error) {
-            console.error("瀵嗙爜缂撳瓨澶辫触:", error);
+            console.error("密码缓存失败:", error);
           }
         }
 
@@ -720,7 +719,7 @@ export function bootGiftBookApp() {
             const bytes = CryptoJS.AES.decrypt(encrypted, passwordHash);
             return bytes.toString(CryptoJS.enc.Utf8);
           } catch (error) {
-            console.error("瀵嗙爜缂撳瓨璇诲彇澶辫触:", error);
+            console.error("密码缓存读取失败:", error);
             return null;
           }
         }
@@ -733,33 +732,33 @@ export function bootGiftBookApp() {
       }
 
       /**
-       * 缁熻绀奸噾璁板綍濮撳悕绾犻敊鐨勬鏁?
-       * - 鍏煎鏃у巻鍙茶褰曚腑鏈啓鍏?changedFields 鐨勬儏鍐?
-       * - 浠呯粺璁＄被鍨嬩负 correction 鐨勫巻鍙茶妭鐐?
-       * @param {Array} history - 绀奸噾鍘嗗彶璁板綍
-       * @returns {number} 宸茬粡鎵ц鐨勫鍚嶇籂閿欐鏁?
+       * 统计礼金记录姓名纠错的次数
+       * - 兼容旧历史记录中未写入 changedFields 的情况
+       * - 仅统计类型为 correction 的历史节点
+       * @param {Array} history - 礼金历史记录
+       * @returns {number} 已经执行的姓名纠错次数
        */
       function countNameCorrections(history) {
         if (!Array.isArray(history)) return 0;
         return history.reduce((total, entry) => {
           if (!entry || entry.type !== "correction") return total;
           if (Array.isArray(entry.changedFields) && entry.changedFields.includes("name")) return total + 1;
-          if (typeof entry.changeLog === "string" && entry.changeLog.includes("绾犻敊濮撳悕")) return total + 1;
+          if (typeof entry.changeLog === "string" && entry.changeLog.includes("纠错姓名")) return total + 1;
           return total;
         }, 0);
       }
 
       /**
-       * 缁熻绀奸噾璁板綍閲戦琚慨鏀圭殑娆℃暟
-       * @param {Array} history - 绀奸噾鍘嗗彶璁板綍
-       * @returns {number} 宸茬粡鎵ц鐨勯噾棰濊皟鏁存鏁?
+       * 统计礼金记录金额被修改的次数
+       * @param {Array} history - 礼金历史记录
+       * @returns {number} 已经执行的金额调整次数
        */
       function countAmountCorrections(history) {
         if (!Array.isArray(history)) return 0;
         return history.reduce((total, entry) => {
           if (!entry || entry.type !== "correction") return total;
           if (Array.isArray(entry.changedFields) && entry.changedFields.includes("amount")) return total + 1;
-          if (typeof entry.changeLog === "string" && (/閲戦/.test(entry.changeLog) || entry.changeLog.toLowerCase().includes("amount"))) return total + 1;
+          if (typeof entry.changeLog === "string" && (/金额/.test(entry.changeLog) || entry.changeLog.toLowerCase().includes("amount"))) return total + 1;
           return total;
         }, 0);
       }
@@ -772,8 +771,8 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 鏋勯€犲啓鍥炴暟鎹簱鎵€闇€鐨勭ぜ閲戣褰曞璞?
-         * 浠呬繚鐣欑储寮曞瓧娈典笌瀵嗘枃锛岄伩鍏嶅皢瑙ｅ瘑鏁版嵁鍐欏叆 IndexedDB
+         * 构造写回数据库所需的礼金记录对象
+         * 仅保留索引字段与密文，避免将解密数据写入 IndexedDB
          */
         buildGiftRecordForUpdate(giftObject, overrides = {}) {
           if (!giftObject) return { ...overrides };
@@ -792,15 +791,15 @@ export function bootGiftBookApp() {
         generateGiftCellHTML(gift, giftIndex) {
           const app = this.app;
           const g = gift.data;
-          // 缁熻濮撳悕涓庨噾棰濈籂閿欐鏁帮紝鐢ㄤ簬闄愬埗鎸夐挳鐘舵€?
+          // 统计姓名与金额纠错次数，用于限制按钮状态
           const isModified = g.history?.some((h) => h.type === "correction");
           const hasRemarks = app.hasRemarkData(g);
           const isAbolished = g.abolished === true;
 
           const statusIndicators = `<div class="mark">
-                            ${hasRemarks ? "<p>*宸插娉?/p>" : ""}
-                            ${isModified ? "<p>*宸蹭慨鏀?/p>" : ""}
-                            ${isAbolished ? '<p class="text-red-600">*宸蹭綔搴?/p>' : ""}
+                            ${hasRemarks ? "<p>*已备注</p>" : ""}
+                            ${isModified ? "<p>*已修改</p>" : ""}
+                            ${isAbolished ? '<p class="text-red-600">*已作废</p>' : ""}
                           </div>`;
 
           const nameClasses = isAbolished ? "opacity-50" : "";
@@ -811,18 +810,18 @@ export function bootGiftBookApp() {
           return {
             nameHTML: `<div class="name ${g.name.length > 4 ? "scale" : ""} ${nameClasses}">${displayName}</div>${statusIndicators}`,
             amountHTML: `<div class="amount-chinese ${amountChinese.length > 16 ? "scale" : ""} ${amountClasses}">${amountChinese}</div>
-                      <div class="amount-numeric ${Math.abs(g.amount).toString().length > 8 ? "scale" : ""} ${amountClasses}">锟?{g.amount}</div>`,
+                      <div class="amount-numeric ${Math.abs(g.amount).toString().length > 8 ? "scale" : ""} ${amountClasses}">￥${g.amount}</div>`,
             giftIndex,
           };
         }
 
         /**
-         * 鎬ц兘浼樺寲锛氬閲忔覆鏌撳崟鏉＄ぜ閲戣褰?
-         * 鍙洿鏂颁笅涓€涓┖浣嶏紝鑰屼笉鏄噸缁樻暣涓〉闈?
-         * 浼樺娍锛?
-         * - 閬垮厤鍏ㄩ〉閲嶇粯锛屾彁鍗囨€ц兘
-         * - 鍑忓皯 DOM 鎿嶄綔娆℃暟
-         * - 鎻愪緵鏇存祦鐣呯殑鐢ㄦ埛浣撻獙
+         * 性能优化：增量渲染单条礼金记录
+         * 只更新下一个空位，而不是重绘整个页面
+         * 优势：
+         * - 避免全页重绘，提升性能
+         * - 减少 DOM 操作次数
+         * - 提供更流畅的用户体验
          */
         renderSingleGift(gift, giftIndex) {
           const app = this.app;
@@ -848,10 +847,10 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 鎬ц兘浼樺寲锛氬閲忔洿鏂板崟鏉＄ぜ閲戣褰?DOM
-         * 鍙洿鏂版寚瀹氫綅缃殑鍗曞厓鏍硷紝閬垮厤鏁撮〉閲嶆柊娓叉煋
-         * @param {number} giftIndex - 绀奸噾绱㈠紩
-         * @param {object} updatedData - 鏈€鏂扮殑绀奸噾鏁版嵁
+         * 性能优化：增量更新单条礼金记录 DOM
+         * 只更新指定位置的单元格，避免整页重新渲染
+         * @param {number} giftIndex - 礼金索引
+         * @param {object} updatedData - 最新的礼金数据
          */
         updateSingleGiftDOM(giftIndex, updatedData) {
           const app = this.app;
@@ -866,9 +865,9 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 鎬ц兘浼樺寲锛氶噸寤虹紦瀛樻暟鎹?
-         * 閲嶆柊璁＄畻鎬婚噾棰濄€佹€讳汉鏁扮瓑缁熻淇℃伅
-         * 鍦ㄥ姞杞戒簨椤规垨鎵归噺瑙ｅ瘑鍚庤皟鐢?
+         * 性能优化：重建缓存数据
+         * 重新计算总金额、总人数等统计信息
+         * 在加载事项或批量解密后调用
          */
         rebuildCache() {
           const app = this.app;
@@ -876,13 +875,13 @@ export function bootGiftBookApp() {
             return gift.data && !gift.data.abolished ? sum + gift.data.amount : sum;
           }, 0);
           app.totalGiversCache = app.gifts.filter((g) => g.data && !g.data.abolished).length;
-          app.statsAreDirty = true; // 鏍囪缁熻璇︽儏闇€瑕侀噸鏂拌绠?
+          app.statsAreDirty = true; // 标记统计详情需要重新计算
         }
 
         /**
-         * 鎬ц兘浼樺寲锛氬閲忔洿鏂扮紦瀛橈紙娣诲姞璁板綍锛?
-         * 鐩存帴鍦ㄧ紦瀛樹笂绱姞閲戦涓庝汉鏁帮紝閬垮厤閲嶆柊閬嶅巻
-         * @param {number} amount - 鏂板璁板綍閲戦
+         * 性能优化：增量更新缓存（添加记录）
+         * 直接在缓存上累加金额与人数，避免重新遍历
+         * @param {number} amount - 新增记录金额
          */
         updateCacheOnAdd(amount) {
           const app = this.app;
@@ -892,29 +891,29 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 鎬ц兘浼樺寲锛氬閲忔洿鏂扮紦瀛橈紙淇敼璁板綍锛?
-         * 鏍规嵁閲戦宸鏇存柊缂撳瓨锛岄伩鍏嶉噸鏂伴亶鍘?
-         * @param {number} oldAmount - 鍘熼噾棰?
-         * @param {number} newAmount - 鏂伴噾棰?
+         * 性能优化：增量更新缓存（修改记录）
+         * 根据金额差额更新缓存，避免重新遍历
+         * @param {number} oldAmount - 原金额
+         * @param {number} newAmount - 新金额
          */
         updateCacheOnUpdate(oldAmount, newAmount) {
           const app = this.app;
           app.totalAmountCache = app.totalAmountCache - oldAmount + newAmount;
-          // 浜烘暟涓嶅彉
+          // 人数不变
           app.statsAreDirty = true;
         }
 
         /**
-         * 缁熶竴鐨勮В瀵嗘柟娉?- 閬垮厤浠ｇ爜鍐椾綑
-         * 瑙ｅ瘑鎸囧畾鑼冨洿鍐呯殑绀奸噾璁板綍锛岃嚜鍔ㄨ烦杩囧凡瑙ｅ瘑鏉＄洰
-         * @param {number} startIdx - 璧峰绱㈠紩锛堝寘鍚級
-         * @param {number} endIdx - 缁撴潫绱㈠紩锛堜笉鍖呭惈锛?
-         * @returns {number} 瀹為檯瑙ｅ瘑璁板綍鏁?
+         * 统一的解密方法 - 避免代码冗余
+         * 解密指定范围内的礼金记录，自动跳过已解密条目
+         * @param {number} startIdx - 起始索引（包含）
+         * @param {number} endIdx - 结束索引（不包含）
+         * @returns {number} 实际解密记录数
          */
         decryptGiftsRange(startIdx, endIdx) {
           const app = this.app;
           if (app.allGiftsDecrypted) {
-            return 0; // 娌℃湁瑙ｅ瘑浠讳綍鏂版潯鐩?
+            return 0; // 没有解密任何新条目
           }
           let decryptedCount = 0;
           const actualEnd = Math.min(endIdx, app.gifts.length);
@@ -924,7 +923,7 @@ export function bootGiftBookApp() {
               const decryptedData = CryptoService.decrypt(app.gifts[i].encryptedData, app.currentPassword);
               app.gifts[i].data = decryptedData;
               app.gifts[i]._needsDecrypt = false;
-              app.gifts[i].encryptedData = null; // 閲婃斁鍐呭瓨
+              app.gifts[i].encryptedData = null; // 释放内存
               decryptedCount++;
             }
           }
@@ -933,8 +932,8 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 鍔犺浇褰撳墠浜嬮」鐨勬墍鏈夌ぜ閲戣褰?
-         * 浣跨敤澶嶅悎绱㈠紩鏌ヨ锛岀粨鏋滄寜绛夌骇涓庢洿鏂版椂闂存帓搴?
+         * 加载当前事项的所有礼金记录
+         * 使用复合索引查询，结果按等级与更新时间排序
          * @returns {Promise<void>}
          */
         async loadGiftsForCurrentEvent() {
@@ -942,26 +941,26 @@ export function bootGiftBookApp() {
           app.allGiftsDecrypted = false;
           const encryptedGifts = await app.giftRepository.fetchOrderedGifts(app.currentEvent.id);
 
-          // 瀹归敊澶勭悊锛氱‘淇濇墍鏈夎褰曢兘鏈?guestLevelWeight 鍜?levelUpdateTime
+          // 容错处理：确保所有记录都有 guestLevelWeight 和 levelUpdateTime
           app.gifts = encryptedGifts.map((g) => {
             if (g.guestLevelWeight === undefined || g.guestLevelWeight === null) {
-              g.guestLevelWeight = 0; // 榛樿绛夌骇
+              g.guestLevelWeight = 0; // 默认等级
             }
             if (g.levelUpdateTime === undefined || g.levelUpdateTime === null) {
-              g.levelUpdateTime = 0; // 榛樿涓?0锛堟湭淇敼杩囩瓑绾э級
+              g.levelUpdateTime = 0; // 默认为 0（未修改过等级）
             }
             return { ...g, data: null, _needsDecrypt: true };
           });
           const pageSize = app.getItemsPerPage();
           const totalPages = Math.ceil(app.gifts.length / pageSize) || 1;
 
-          // 鏅鸿兘閫夋嫨鍒濆椤电爜锛氬凡缁撴潫鏄剧ず绗竴椤碉紝杩涜涓樉绀烘渶鍚庝竴椤?
+          // 智能选择初始页码：已结束显示第一页，进行中显示最后一页
           const now = new Date();
           const endTime = new Date(app.currentEvent.endDateTime);
           const isEventEnded = now > endTime;
           app.currentPage = isEventEnded ? 1 : totalPages;
           if (!this.allGiftsDecrypted) {
-            // 瑙ｅ瘑褰撳墠椤垫暟鎹?
+            // 解密当前页数据
             const pageStart = (app.currentPage - 1) * pageSize;
             const pageEnd = Math.min(pageStart + pageSize, app.gifts.length);
             app.giftManager.decryptGiftsRange(pageStart, pageEnd);
@@ -970,7 +969,7 @@ export function bootGiftBookApp() {
           app.giftManager.rebuildCache();
           app.giftManager.render();
 
-          // 寮傛瑙ｅ瘑鍓╀綑鏁版嵁
+          // 异步解密剩余数据
           if (app.gifts.length > 0) {
             const scheduleIdle = typeof requestIdleCallback === "function" ? requestIdleCallback : (cb) => setTimeout(cb, 16);
             scheduleIdle(() => app.giftManager.decryptRemainingGifts(0));
@@ -978,8 +977,8 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 鍒╃敤 requestIdleCallback 鍦ㄦ祻瑙堝櫒绌洪棽鏃惰В瀵?
-         * 閬垮厤涓€娆℃€цВ瀵嗛樆濉炰富绾跨▼锛屽ぇ閲忔暟鎹椂鍒嗘壒澶勭悊
+         * 利用 requestIdleCallback 在浏览器空闲时解密
+         * 避免一次性解密阻塞主线程，大量数据时分批处理
          */
         async decryptRemainingGifts(startIndex) {
           const app = this.app;
@@ -989,13 +988,13 @@ export function bootGiftBookApp() {
           for (let i = startIndex; i < app.gifts.length; i += BATCH_SIZE) {
             const batchEnd = Math.min(i + BATCH_SIZE, app.gifts.length);
 
-            // 浣跨敤缁熶竴鐨勮В瀵嗘柟娉?
+            // 使用统一的解密方法
             const decryptedCount = app.giftManager.decryptGiftsRange(i, batchEnd);
             if (decryptedCount > 0) {
               didDecrypt = true;
             }
 
-            // 绛夊緟娴忚鍣ㄧ┖闂插啀缁х画
+            // 等待浏览器空闲再继续
             await new Promise((resolve) => {
               if ("requestIdleCallback" in window) {
                 requestIdleCallback(resolve);
@@ -1004,19 +1003,19 @@ export function bootGiftBookApp() {
               }
             });
 
-            // 鏇存柊缂撳瓨鍜?UI
+            // 更新缓存和 UI
             if (didDecrypt) {
               app.giftManager.rebuildCache();
               app.giftManager.updateTotals();
-              didDecrypt = false; // 閲嶇疆鏍囧織
+              didDecrypt = false; // 重置标志
             }
           }
-          app.allGiftsDecrypted = true; // 鏍囪鎵€鏈夋暟鎹凡瑙ｅ瘑
+          app.allGiftsDecrypted = true; // 标记所有数据已解密
         }
 
         /**
-         * 娓叉煋涓荤晫闈?- 缁熶竴鍏ュ彛
-         * 渚濇娓叉煋绀肩翱銆佹洿鏂扮粺璁′笌鍒嗛〉淇℃伅
+         * 渲染主界面 - 统一入口
+         * 依次渲染礼簿、更新统计与分页信息
          */
         render() {
           const app = this.app;
@@ -1026,8 +1025,8 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 娓叉煋绀肩翱鍐呭 - 鐢熸垚褰撳墠椤?DOM
-         * 浣跨敤 DocumentFragment 涓€娆℃€ф彃鍏ワ紝鍑忓皯閲嶆帓
+         * 渲染礼簿内容 - 生成当前页 DOM
+         * 使用 DocumentFragment 一次性插入，减少重排
          */
         renderGiftBook() {
           const app = this.app;
@@ -1038,13 +1037,13 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 鏇存柊鐣岄潰缁熻鏁版嵁鏄剧ず
-         * 璁＄畻鏈〉灏忚骞跺睍绀虹紦瀛樼殑鎬婚銆佹€讳汉鏁?
+         * 更新界面统计数据显示
+         * 计算本页小计并展示缓存的总额、总人数
          */
         updateTotals() {
           const app = this.app;
           const itemsOnPage = app.gifts.slice((app.currentPage - 1) * app.getItemsPerPage(), app.currentPage * app.getItemsPerPage());
-          // 鍙绠楁湭浣滃簾璁板綍鐨勯噾棰?
+          // 只计算未作废记录的金额
           const pageSubtotal = itemsOnPage.reduce((sum, gift) => {
             if (gift.data && !gift.data.abolished) {
               return sum + gift.data.amount;
@@ -1062,19 +1061,19 @@ export function bootGiftBookApp() {
           const app = this.app;
           const totalPages = Math.ceil(app.gifts.length / app.getItemsPerPage()) || 1;
           app.ui.elements.pageInfoEl.innerHTML = `
-                        绗?
+                        第
                         <input type="number" id="current-page-input" value="${app.currentPage}"
                               min="1" max="${totalPages}"
                               class="w-[${app.currentPage.toString().length}em] text-center bg-transparent themed-ring rounded border p-0 mx-2 font-bold focus:w-[4em]">
-                        / ${totalPages} 椤?
+                        / ${totalPages} 页
                       `;
           app.ui.elements.prevPageBtn.disabled = app.currentPage === 1;
           app.ui.elements.nextPageBtn.disabled = app.currentPage === totalPages;
         }
 
         /**
-         * 缈婚〉鍔熻兘
-         * @param {number} direction - 鏂瑰悜锛? 涓轰笅涓€椤碉紝-1 涓轰笂涓€椤?
+         * 翻页功能
+         * @param {number} direction - 方向：1 为下一页，-1 为上一页
          */
         changePage(direction) {
           const app = this.app;
@@ -1090,27 +1089,27 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 纭繚褰撳墠椤垫暟鎹В瀵?- 鎳掑姞杞戒紭鍖栫瓥鐣?
-         * 鍙В瀵嗗綋鍓嶉〉闇€瑕佹樉绀虹殑鏁版嵁锛屽噺灏戝唴瀛樺崰鐢ㄥ拰鍔犺浇鏃堕棿
-         * 鍘熺悊锛氬埄鐢?_needsDecrypt 鏍囧織浣嶈窡韪摢浜涙暟鎹渶瑕佽В瀵?
-         * 鎬ц兘锛氬浜庡ぇ閲忔暟鎹紙>500鏉★級鍙樉钁楁彁鍗囬〉闈㈠搷搴旈€熷害
+         * 确保当前页数据解密 - 懒加载优化策略
+         * 只解密当前页需要显示的数据，减少内存占用和加载时间
+         * 原理：利用 _needsDecrypt 标志位跟踪哪些数据需要解密
+         * 性能：对于大量数据（>500条）可显著提升页面响应速度
          */
         ensureCurrentPageDecrypted() {
           const app = this.app;
-          // 璁＄畻褰撳墠椤电殑璧峰鍜岀粨鏉熺储寮?
+          // 计算当前页的起始和结束索引
           const start = (app.currentPage - 1) * app.getItemsPerPage();
           const end = Math.min(start + app.getItemsPerPage(), app.gifts.length);
 
-          // 浣跨敤缁熶竴鐨勮В瀵嗘柟娉?
+          // 使用统一的解密方法
           !this.allGiftsDecrypted && app.giftManager.decryptGiftsRange(start, end);
         }
 
         /**
-         * 鎸夌瓑绾?绛夌骇淇敼鏃堕棿鎺掑簭绀奸噾鏁扮粍锛堥€氱敤鏂规硶锛?
-         * 鎺掑簭閫昏緫锛?
-         * 1. 绛夌骇闄嶅簭锛堥珮绛夌骇鍦ㄥ墠锛?
-         * 2. 鐩稿悓绛夌骇鍐呮寜 levelUpdateTime 闄嶅簭锛堜慨鏀硅繃绛夌骇鐨勫湪鍓嶏級
-         * 3. levelUpdateTime 鐩稿悓鏃舵寜 id 鍗囧簭锛堝綍鍏ラ『搴忥級
+         * 按等级+等级修改时间排序礼金数组（通用方法）
+         * 排序逻辑：
+         * 1. 等级降序（高等级在前）
+         * 2. 相同等级内按 levelUpdateTime 降序（修改过等级的在前）
+         * 3. levelUpdateTime 相同时按 id 升序（录入顺序）
          */
         sortGiftsByLevel() {
           const app = this.app;
@@ -1118,36 +1117,36 @@ export function bootGiftBookApp() {
             const weightDiff = (b.guestLevelWeight || 0) - (a.guestLevelWeight || 0);
             if (weightDiff !== 0) return weightDiff;
 
-            // levelUpdateTime 闄嶅簭锛? 鎺掑湪鏈€鍚庯級
+            // levelUpdateTime 降序（0 排在最后）
             const aTime = a.levelUpdateTime || 0;
             const bTime = b.levelUpdateTime || 0;
             const timeDiff = bTime - aTime;
             if (timeDiff !== 0) return timeDiff;
 
-            // id 鍗囧簭锛堝綍鍏ラ『搴忥級
+            // id 升序（录入顺序）
             return (a.id || 0) - (b.id || 0);
           });
         }
 
         /**
-         * 鍒涘缓鏁版嵁蹇収锛堥€氱敤鏂规硶锛? 纭繚蹇収淇℃伅瀹屾暣
-         * @param {Object} data - 鍘熷鏁版嵁 (淇敼鍓嶇殑鐘舵€?
-         * @param {Object} changedFields - 鍙樺寲鐨勫瓧娈?(鍙€?
-         * @returns {Object} 蹇収瀵硅薄
+         * 创建数据快照（通用方法）- 确保快照信息完整
+         * @param {Object} data - 原始数据 (修改前的状态)
+         * @param {Object} changedFields - 变化的字段 (可选)
+         * @returns {Object} 快照对象
          */
         createSnapshot(data, changedFields = null) {
           const app = this.app;
           const snapshot = {
             name: data.name,
             amount: data.amount,
-            type: data.type, // 纭繚 type 瀛楁鎬绘槸琚寘鍚?
-            remarkData: data.remarkData, // 鍖呭惈褰撳墠鐨勫娉ㄥ璞?
+            type: data.type, // 确保 type 字段总是被包含
+            remarkData: data.remarkData, // 包含当前的备注对象
             guestLevel: data.guestLevel !== undefined ? data.guestLevel : 0,
             timestamp: data.timestamp,
           };
 
-          // 濡傛灉浼犲叆浜?changedFields锛岀敤 data 涓搴旂殑鏃у€艰鐩栧揩鐓т腑鐨勫瓧娈?
-          // 杩欎竴姝ョ‘淇濅簡蹇収璁板綍鐨勬槸 *鍙樺寲鍙戠敓鍓? 鐨勭‘鍒囩姸鎬?
+          // 如果传入了 changedFields，用 data 中对应的旧值覆盖快照中的字段
+          // 这一步确保了快照记录的是 *变化发生前* 的确切状态
           if (changedFields && typeof changedFields === "object") {
             Object.keys(changedFields).forEach((key) => {
               if (data.hasOwnProperty(key)) {
@@ -1160,10 +1159,10 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 鎵ц绀奸噾鏁版嵁鏇存柊鐨勭粺涓€鍏ュ彛
-         * - 鍏煎濮撳悕绾犻敊銆侀噾棰濊皟鏁淬€佸娉ㄦ洿鏂扮瓑鍦烘櫙
-         * - 鍦ㄦ彁浜ゅ墠澶勭悊绠＄悊鍛樺瘑鐮佹牳楠屼笌鍘嗗彶璁板綍蹇収
-         * - 鎴愬姛鍚庡悓姝ユ洿鏂版湰鍦扮紦瀛樸€佺粺璁′俊鎭笌鐣岄潰
+         * 执行礼金数据更新的统一入口
+         * - 兼容姓名纠错、金额调整、备注更新等场景
+         * - 在提交前处理管理员密码核验与历史记录快照
+         * - 成功后同步更新本地缓存、统计信息与界面
          */
         async performUpdate(giftIndex, newFields, changeLogText, updateType) {
           const app = this.app;
@@ -1173,29 +1172,29 @@ export function bootGiftBookApp() {
           const currentData = { ...giftObject.data };
           const changedFieldKeys = Object.keys(newFields || {}).filter((key) => Object.prototype.hasOwnProperty.call(currentData, key) && currentData[key] !== newFields[key]);
 
-          // 鏍规嵁鍙樻洿绫诲瀷鍒ゆ柇鏄惁闇€瑕佺鐞嗗憳瀵嗙爜锛堢籂閿欏己鍒堕獙璇侊級
+          // 根据变更类型判断是否需要管理员密码（纠错强制验证）
           let password = null;
           if (updateType === "correction") {
             const forceVerify = changedFieldKeys.includes("name") || changedFieldKeys.includes("amount");
-            password = await app.requestAdminPassword("淇敼纭", "濡傝璋冩暣绀奸噾淇℃伅锛岃杈撳叆绠＄悊鍛樺瘑鐮併€?, null, forceVerify);
+            password = await app.requestAdminPassword("修改确认", "如要调整礼金信息，请输入管理员密码。", null, forceVerify);
           } else if (updateType === "remark") {
             const isOutOfTime = new Date() < new Date(app.currentEvent.startDateTime) || new Date() > new Date(app.currentEvent.endDateTime);
             if (isOutOfTime) {
-              password = await app.requestAdminPassword("澶囨敞璁板綍", "褰撳墠宸茶秴杩囨湁鏁堝綍鍏ユ椂闂达紝璇疯緭鍏ョ鐞嗗憳瀵嗙爜鍚庣户缁慨鏀瑰娉ㄣ€?);
+              password = await app.requestAdminPassword("备注记录", "当前已超过有效录入时间，请输入管理员密码后继续修改备注。");
             } else {
-              password = app.currentPassword; // 鍦ㄦ湁鏁堟椂娈靛唴锛岀洿鎺ヤ娇鐢ㄥ綋鍓嶅瘑鐮?
+              password = app.currentPassword; // 在有效时段内，直接使用当前密码
             }
           }
 
           if (password === null) {
-            // 鐢ㄦ埛鍙栨秷鎴栭獙璇佸け璐ワ紝鐩存帴杩斿洖璇︽儏椤?
+            // 用户取消或验证失败，直接返回详情页
             app.showGiftDetails(giftIndex);
             return;
           }
 
           const oldAmount = currentData.amount;
           const now = new Date().toISOString();
-          // 璁板綍鍙樻洿鏃ュ織骞惰ˉ榻愭洿鏂板墠鐨勫揩鐓ф暟鎹紝渚夸簬鍥炴函
+          // 记录变更日志并补齐更新前的快照数据，便于回溯
           const historyEntry = {
             timestamp: now,
             changeLog: changeLogText,
@@ -1204,15 +1203,15 @@ export function bootGiftBookApp() {
             changedFields: changedFieldKeys,
           };
 
-          // 鍚堝苟鏃ф暟鎹笌鏂板瓧娈碉紝骞跺皢鍘嗗彶璁板綍杩藉姞鑷虫湯灏?
+          // 合并旧数据与新字段，并将历史记录追加至末尾
           const updatedData = {
             ...currentData,
             ...newFields,
             timestamp: now,
             history: currentData.history ? [...currentData.history, historyEntry] : [historyEntry],
           };
-          const newAmount = updatedData.amount; // 鑾峰彇鏈€鏂扮増閲戦
-          // 灏嗘渶鏂版暟鎹姞瀵嗕繚瀛橈紝骞跺湪鎴愬姛鍚庡埛鏂?UI 涓庣粺璁′俊鎭?
+          const newAmount = updatedData.amount; // 获取最新版金额
+          // 将最新数据加密保存，并在成功后刷新 UI 与统计信息
           try {
             const encryptedData = CryptoService.encrypt(updatedData, app.currentPassword);
             const recordToUpdate = this.buildGiftRecordForUpdate(giftObject, { encryptedData });
@@ -1227,13 +1226,13 @@ export function bootGiftBookApp() {
               app.giftManager.updateTotals();
             }
             app.ui.closeModal();
-            app.ui.showNotification("淇敼鎴愬姛", "success");
+            app.ui.showNotification("修改成功", "success");
             app.guestScreenService.syncToGuestScreen();
 
             setTimeout(() => app.showGiftDetails(giftIndex), 300);
           } catch (error) {
-            console.error("鏇存柊澶辫触", error);
-            app.ui.showNotification("鏇存柊璁板綍澶辫触锛岃绋嶅悗閲嶈瘯", "error");
+            console.error("更新失败", error);
+            app.ui.showNotification("更新记录失败，请稍后重试", "error");
             app.showGiftDetails(giftIndex);
           }
         }
@@ -1246,33 +1245,33 @@ export function bootGiftBookApp() {
           app.guestScreenService.syncToGuestScreen();
           if (!gift || !gift.data) return;
           if (gift.data.abolished) {
-            app.ui.showNotification("璇ヨ褰曞凡琚綔搴熴€?);
+            app.ui.showNotification("该记录已被作废。");
             return;
           }
 
-          // 杈撳叆浣滃簾鐞嗙敱
+          // 输入作废理由
           const reason = await new Promise((resolve) => {
             app.ui.elements.modalActions.classList.remove("hidden");
             app.ui.elements.modal.classList.remove("modal-large");
             const content = `
                         <div class="space-y-3 text-left">
-                          <p class="text-sm text-red-600">璇疯緭鍏ヤ綔搴熺悊鐢憋紙蹇呭～锛夛細</p>
+                          <p class="text-sm text-red-600">请输入作废理由（必填）：</p>
                           <textarea id="abolish-reason-input" class="w-full p-3 border rounded themed-ring" rows="4"
-                            placeholder="渚嬪锛氶噸澶嶅綍鍏ャ€侀敊璇褰曘€佸浜烘挙閿€绀奸噾绛?
+                            placeholder="例如：重复录入、错误记录、客人撤销礼金等"
                             required></textarea>
-                          <p class="text-xs text-gray-500">娉細浣滃簾鍚庯紝璇ヨ褰曞皢淇濈暀鍦ㄧ郴缁熶腑浣嗕笉璁″叆鎬婚噾棰濓紝骞朵笖涓嶄細鍦ㄦ墦鍗癙DF鏃舵樉绀恒€?/p>
+                          <p class="text-xs text-gray-500">注：作废后，该记录将保留在系统中但不计入总金额，并且不会在打印PDF时显示。</p>
                         </div>
                       `;
-            app.ui.showModal("璇疯緭鍏ヤ綔搴熺悊鐢?, content, [
-              { text: "鍙栨秷", class: "themed-button-secondary border px-4 py-2 rounded", handler: () => resolve(null) },
+            app.ui.showModal("请输入作废理由", content, [
+              { text: "取消", class: "themed-button-secondary border px-4 py-2 rounded", handler: () => resolve(null) },
               {
-                text: "涓嬩竴姝?,
+                text: "下一步",
                 class: "themed-button-primary text-white px-4 py-2 rounded  ",
                 handler: () => {
                   const reasonText = document.getElementById("abolish-reason-input").value.trim();
                   if (!reasonText) {
-                    app.ui.showNotification("璇峰～鍐欎綔搴熺悊鐢便€?, "error");
-                    return; // 淇濇寔寮圭獥鎵撳紑
+                    app.ui.showNotification("请填写作废理由。", "error");
+                    return; // 保持弹窗打开
                   }
                   resolve(reasonText);
                 },
@@ -1287,12 +1286,12 @@ export function bootGiftBookApp() {
             return;
           }
 
-          // 鏍￠獙绠＄悊鍛樺瘑鐮?
-          const password = await app.requestAdminPassword("浣滃簾纭", `鍗冲皢浣滃簾 \"${gift.data.name}\" 鐨勭ぜ閲戣褰曘€傝杈撳叆绠＄悊瀵嗙爜浠ョ户缁€俙, null, true);
+          // 校验管理员密码
+          const password = await app.requestAdminPassword("作废确认", `即将作废 \"${gift.data.name}\" 的礼金记录。请输入管理密码以继续。`, null, true);
 
           if (password === null) return;
 
-          // 鎵ц浣滃簾鎿嶄綔
+          // 执行作废操作
           try {
             const amountToAbolish = gift.data.amount;
             const currentData = { ...gift.data };
@@ -1300,7 +1299,7 @@ export function bootGiftBookApp() {
 
             const historyEntry = {
               timestamp: now,
-              changeLog: `璇ヨ褰曞凡浣滃簾銆傦紝鐞嗙敱锛?{reason}`,
+              changeLog: `该记录已作废。，理由：${reason}`,
               snapshot: app.giftManager.createSnapshot(currentData),
               type: "abolish",
             };
@@ -1322,11 +1321,11 @@ export function bootGiftBookApp() {
             app.statsAreDirty = true;
             app.giftManager.render();
             app.ui.closeModal();
-            app.ui.showNotification("璁板綍宸蹭綔搴熴€?, "success");
+            app.ui.showNotification("记录已作废。", "success");
             app.guestScreenService.syncToGuestScreen();
           } catch (error) {
-            console.error("浣滃簾澶辫触:", error);
-            app.ui.showNotification("浣滃簾鎿嶄綔鏃跺彂鐢熸湭鐭ラ敊璇紝璇烽噸璇曘€?, "error");
+            console.error("作废失败:", error);
+            app.ui.showNotification("作废操作时发生未知错误，请重试。", "error");
           }
         }
       }
@@ -1336,51 +1335,51 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 鍑嗗鎵撳嵃/瀵煎嚭 PDF
-         * 鏍规嵁璁板綍鏁伴噺鍜岃澶囩幆澧冨喅瀹氭墦鍗版柟寮忥紝骞跺湪蹇呰鏃舵彁绀洪厤缃?
+         * 准备打印/导出 PDF
+         * 根据记录数量和设备环境决定打印方式，并在必要时提示配置
          */
         async prepareForPrint() {
           const app = this.app;
-          // 璁＄畻鏈夋晥璁板綍鏁帮紙涓嶅惈浣滃簾锛?
+          // 计算有效记录数（不含作废）
           const activeGiftsCount = app.gifts.filter((g) => g.data && !g.data.abolished).length;
 
           if (activeGiftsCount === 0) {
-            app.ui.showNotification("褰撳墠浜嬮」娌℃湁鏈夋晥鐨勭ぜ閲戣褰曪紝鏃犻渶鎵撳嵃銆?);
+            app.ui.showNotification("当前事项没有有效的礼金记录，无需打印。");
             return;
           }
 
           const canProceed = await app.exportService.ensurePrintPreferences();
           if (!canProceed) return;
 
-          // 澶ч噺鏁版嵁鏃舵樉绀哄垎鎵归€夋嫨瀵硅瘽妗?
+          // 大量数据时显示分批选择对话框
           if (app.gifts.length > CONFIG.PRINT_SPLIT_THRESHOLD) {
             app.exportService.showPrintChunkModal();
             return;
           }
 
-          // 灏戦噺鏁版嵁鐩存帴鎵撳嵃
+          // 少量数据直接打印
           const selectedEngine = app.currentEvent.printOptions?.pdfEngine || "browser";
           const shouldUsePdfLib = Utils.isMobile() || selectedEngine === "pdf-lib";
 
           if (shouldUsePdfLib) {
-            // 绉诲姩绔垨寮哄埗 PDF-LIB 鎯呭喌涓嬬洿鎺ョ敓鎴?PDF
+            // 移动端或强制 PDF-LIB 情况下直接生成 PDF
             app.exportService.generatePdf(0, app.gifts.length);
           } else {
-            // 妗岄潰璁惧涓婅皟鐢ㄦ祻瑙堝櫒鍘熺敓鎵撳嵃鍔熻兘/鐢熸垚 PDF
+            // 桌面设备上调用浏览器原生打印功能/生成 PDF
             app.exportService.executePrint(0, app.gifts.length);
           }
         }
 
         /**
-         * 鏄剧ず鍒嗘壒鎵撳嵃閫夋嫨瀵硅瘽妗?
-         * 鐢ㄤ簬璁板綍鏁拌秴闃堝€兼椂鎸夊潡瀵煎嚭
+         * 显示分批打印选择对话框
+         * 用于记录数超阈值时按块导出
          */
         showPrintChunkModal() {
           const app = this.app;
           const chunkSize = CONFIG.PRINT_SPLIT_THRESHOLD;
           const totalChunks = Math.ceil(app.gifts.length / chunkSize);
 
-          let contentHtml = `<p class="mb-4 text-sm text-gray-700">鐢变簬绀奸噾璁板綍鏁拌緝澶氾紝涓洪槻姝㈡覆鏌撴椂鍗℃锛岄渶瑕佸垎鎵规墦鍗板鍑猴紝璇烽€夋嫨瑕佸鍑虹殑閮ㄥ垎锛?/p>`;
+          let contentHtml = `<p class="mb-4 text-sm text-gray-700">由于礼金记录数较多，为防止渲染时卡死，需要分批打印导出，请选择要导出的部分：</p>`;
           contentHtml += `<div class="space-y-2 border rounded-lg p-2 max-h-[50vh] overflow-y-auto">`;
 
           for (let i = 0; i < totalChunks; i++) {
@@ -1390,14 +1389,14 @@ export function bootGiftBookApp() {
                       <div class="print-chunk-item flex justify-between items-center p-3 rounded-lg cursor-pointer themed-link-hover"
                            data-start="${i * chunkSize}" data-end="${endRecord}"
                            data-part-index="${i + 1}"
-                           data-original-text="鐢熸垚鎵撳嵃绗?${i + 1} 閮ㄥ垎 (璁板綍 ${startRecord} - ${endRecord})">
-                        <span class="main-text">鎵撳嵃绗?${i + 1} 閮ㄥ垎 (璁板綍 ${startRecord} - ${endRecord})</span>
+                           data-original-text="生成打印第 ${i + 1} 部分 (记录 ${startRecord} - ${endRecord})">
+                        <span class="main-text">打印第 ${i + 1} 部分 (记录 ${startRecord} - ${endRecord})</span>
                         <span class="status-icon text-green-600 font-bold"></span>
                       </div>`;
           }
           contentHtml += `</div>`;
 
-          app.ui.showModal("鍒嗘壒鎵撳嵃/瀵煎嚭PDF", contentHtml, [{ text: "鍏抽棴", class: "themed-button-secondary border px-4 py-2 rounded" }]);
+          app.ui.showModal("分批打印/导出PDF", contentHtml, [{ text: "关闭", class: "themed-button-secondary border px-4 py-2 rounded" }]);
 
           setTimeout(() => {
             document.querySelectorAll(".print-chunk-item").forEach((item) => {
@@ -1409,7 +1408,7 @@ export function bootGiftBookApp() {
                 const partIndex = parseInt(el.dataset.partIndex);
                 const mainTextSpan = el.querySelector(".main-text");
                 const originalText = el.dataset.originalText || "";
-                mainTextSpan.textContent = "鐢熸垚涓?..";
+                mainTextSpan.textContent = "生成中...";
                 el.classList.add("cursor-wait");
 
                 const selectedEngine = app.currentEvent.printOptions?.pdfEngine || "browser";
@@ -1421,7 +1420,7 @@ export function bootGiftBookApp() {
                 }
 
                 el.dataset.status = "completed";
-                mainTextSpan.textContent = `${originalText} (宸插畬鎴?`;
+                mainTextSpan.textContent = `${originalText} (已完成)`;
                 const statusIcon = el.querySelector(".status-icon");
                 statusIcon.innerHTML = "&#10004;";
                 el.classList.remove("cursor-wait");
@@ -1432,15 +1431,15 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 鐢熸垚 PDF
-         * @param {number} startIndex - 璧峰绱㈠紩
-         * @param {number} endIndex - 缁撴潫绱㈠紩
-         * @param {number|null} partIndex - 鍒嗘壒缂栧彿锛堜负 null 鏃惰〃绀轰笉鍒嗘壒锛?
+         * 生成 PDF
+         * @param {number} startIndex - 起始索引
+         * @param {number} endIndex - 结束索引
+         * @param {number|null} partIndex - 分批编号（为 null 时表示不分批）
          */
         async generatePdf(startIndex, endIndex, partIndex = null) {
           const app = this.app;
           if (app.isGeneratingPdf) {
-            app.ui.showNotification("姝ｅ湪鐢熸垚 PDF锛岃鍕块噸澶嶆搷浣?..", "info");
+            app.ui.showNotification("正在生成 PDF，请勿重复操作...", "info");
             return;
           }
 
@@ -1451,10 +1450,10 @@ export function bootGiftBookApp() {
           try {
             app.isGeneratingPdf = true;
             printBtn.disabled = true;
-            printBtn.innerHTML = '<i class="ri-loader-4-line animate-spin mr-2"></i>姝ｅ湪鐢熸垚...';
-            app.ui.showNotification("姝ｅ湪鐢熸垚 PDF 鏂囦欢锛岃绋嶅€?..", "info");
+            printBtn.innerHTML = '<i class="ri-loader-4-line animate-spin mr-2"></i>正在生成...';
+            app.ui.showNotification("正在生成 PDF 文件，请稍候...", "info");
 
-            // ====================== 1. 瑙ｆ瀽鑷畾涔夐厤缃紙缁熶竴澶勭悊鈥滆嚜瀹氫箟 or 鍏滃簳鈥濓級 ======================
+            // ====================== 1. 解析自定义配置（统一处理“自定义 or 兜底”） ======================
             const customStyle = app.currentEvent.customStyle || {};
             const isSolemnTheme = app.currentEvent.theme === "theme-solemn";
 
@@ -1476,12 +1475,12 @@ export function bootGiftBookApp() {
               },
             };
 
-            // 鑷畾涔夊浘鐗囷紙灏侀潰 + 鑳屾櫙锛?
-            const coverImageUrl = app.currentEvent.coverType === "custom" ? (await ImageCache.getEventCoverUrl(app.currentEvent.id)) || "/cover1.jpg" : "/cover1.jpg";
+            // 自定义图片（封面 + 背景）
+            const coverImageUrl = app.currentEvent.coverType === "custom" ? (await ImageCache.getEventCoverUrl(app.currentEvent.id)) || "./static/cover1.jpg" : "./static/cover1.jpg";
 
-            const bgImageUrl = (await ImageCache.getBackgroundUrl(app.currentEvent.id)) || "/bg.jpg";
+            const bgImageUrl = (await ImageCache.getBackgroundUrl(app.currentEvent.id)) || "./static/bg.jpg";
 
-            // ====================== 2. 缁熶竴鍔犺浇鑷畾涔夊瓧浣?======================
+            // ====================== 2. 统一加载自定义字体 ======================
             const customFontNames = {
               name: resolve.font(customStyle.name?.font),
               label: resolve.font(customStyle.type?.font),
@@ -1503,14 +1502,14 @@ export function bootGiftBookApp() {
                     fontBytesMap[key] = new Uint8Array(buffer);
                   }
                 } catch (e) {
-                  console.warn(`鍔犺浇瀛椾綋澶辫触: ${postscriptName}`, e);
+                  console.warn(`加载字体失败: ${postscriptName}`, e);
                 }
               };
 
               await Promise.all(Object.keys(customFontNames).map((key) => loadFont(customFontNames[key], key)));
             }
 
-            // 杞垚 Blob URL锛堢粺涓€绠＄悊锛宖inally 涓?revoke锛?
+            // 转成 Blob URL（统一管理，finally 中 revoke）
             const createBlobUrl = (bytes) => {
               if (!bytes?.length) return null;
               const blob = new Blob([bytes], { type: "font/ttf" });
@@ -1527,7 +1526,7 @@ export function bootGiftBookApp() {
               pageInfo: createBlobUrl(fontBytesMap.pageInfo),
             };
 
-            // ====================== 3. 鏋勯€犳渶缁?PDF 鍙傛暟锛堝眰绾ф竻鏅般€佸悎骞堕泦涓級 ======================
+            // ====================== 3. 构造最终 PDF 参数（层级清晰、合并集中） ======================
             const eventDateInfo = Utils.getEventDateInfo(app.currentEvent.startDateTime);
             const totalParts = app.gifts.length > CONFIG.PRINT_SPLIT_THRESHOLD ? Math.ceil(app.gifts.length / CONFIG.PRINT_SPLIT_THRESHOLD) : null;
 
@@ -1539,23 +1538,23 @@ export function bootGiftBookApp() {
               title: app.currentEvent.name,
               recorder: app.currentEvent.recorder || null,
               subtitle: eventDateInfo.formattedDisplay,
-              giftLabel: isSolemnTheme ? "绀奸噾" : "璐虹ぜ",
+              giftLabel: isSolemnTheme ? "礼金" : "贺礼",
               backgroundImage: bgImageUrl,
-              backCoverImage: "/cover2.jpg",
+              backCoverImage: "./static/cover2.jpg",
               partIndex,
               totalParts,
               grandTotalAmount: app.totalAmountCache,
               grandTotalGivers: app.totalGiversCache,
-              mainFontUrl: "/MaShanZheng-Regular.ttf",
-              giftLabelFontUrl: "/SourceHanSerifCN-Heavy.ttf",
-              formalFontUrl: "/NotoSansSCMedium-mini.ttf",
+              mainFontUrl: "./static/MaShanZheng-Regular.ttf",
+              giftLabelFontUrl: "./static/SourceHanSerifCN-Heavy.ttf",
+              formalFontUrl: "./static/NotoSansSCMedium-mini.ttf",
               itemsPerPage: app.getItemsPerPage(),
             };
 
             const generatorOptions = {
               ...baseOptions,
               giftBookStyles,
-              // 鑷畾涔夊瓧浣撲紭鍏堬紝娌℃湁鍒欒蛋榛樿闈欐€佸瓧浣?
+              // 自定义字体优先，没有则走默认静态字体
               mainFontUrl: fontUrls.name || baseOptions.mainFontUrl,
               giftLabelFontUrl: fontUrls.label || baseOptions.giftLabelFontUrl,
               formalFontUrl: fontUrls.pageInfo || baseOptions.formalFontUrl,
@@ -1563,7 +1562,7 @@ export function bootGiftBookApp() {
               coverFontUrl: fontUrls.cover || null,
             };
 
-            // ====================== 4. 鐢熸垚 PDF ======================
+            // ====================== 4. 生成 PDF ======================
             app.pdfGenerator = new GiftRegistryPDF(generatorOptions);
 
             const data = app.gifts.slice(startIndex, endIndex).map(({ data }) => ({
@@ -1580,16 +1579,16 @@ export function bootGiftBookApp() {
             const pdfUrl = URL.createObjectURL(blob);
             const link = document.createElement("a");
             link.href = pdfUrl;
-            const safeEventName = (app.currentEvent.name || "绀肩翱").replace(/[\\/:*?"<>|]/g, "_");
+            const safeEventName = (app.currentEvent.name || "礼簿").replace(/[\\/:*?"<>|]/g, "_");
             const dateStr = eventDateInfo.localeDate.replace(/\//g, "-");
             const partSuffix = partIndex ? `_Part${partIndex}` : "";
-            link.download = `${safeEventName}_绀奸噾璁板綍_${dateStr}${partSuffix}.pdf`;
+            link.download = `${safeEventName}_礼金记录_${dateStr}${partSuffix}.pdf`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
           } catch (error) {
             console.error(error);
-            app.ui.showNotification("鐢熸垚 PDF 鏃跺嚭鐜伴敊璇紝璇烽噸璇曘€?, "error");
+            app.ui.showNotification("生成 PDF 时出现错误，请重试。", "error");
           } finally {
             app.isGeneratingPdf = false;
             printBtn.disabled = false;
@@ -1599,11 +1598,11 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 鎵ц鎵撳嵃/鐢熸垚瀵煎嚭 PDF (娴忚鍣ㄥ師鐢熸墦鍗版柟寮?
+         * 执行打印/生成导出 PDF (浏览器原生打印方式)
          */
         executePrint(startIdx, endIdx, partIndex = null, totalParts = null) {
           const app = this.app;
-          // 纭繚鏁版嵁宸茶В瀵?
+          // 确保数据已解密
           !this.allGiftsDecrypted && app.giftManager.decryptGiftsRange(startIdx, endIdx);
           const allGiftsSubset = app.gifts.slice(startIdx, endIdx);
 
@@ -1621,9 +1620,9 @@ export function bootGiftBookApp() {
             };
             const eventDateInfo = Utils.getEventDateInfo(app.currentEvent.startDateTime);
 
-            document.title = `${app.currentEvent.name}绀奸噾璁板綍{partIndex ? "-P" + partIndex : ""}-${eventDateInfo.localeDate}`;
+            document.title = `${app.currentEvent.name}礼金记录{partIndex ? "-P" + partIndex : ""}-${eventDateInfo.localeDate}`;
 
-            // 灏侀潰椤?
+            // 封面页
             if (printOptions.printCover) {
               const coverPage = document.createElement("div");
               coverPage.className = "print-page print-cover-page";
@@ -1637,14 +1636,14 @@ export function bootGiftBookApp() {
               printView.appendChild(coverPage);
             }
 
-            // 鍐呭椤?
+            // 内容页
             const giftsSubset = allGiftsSubset.filter((g) => g.data && !g.data.abolished);
             const totalGiftPages = Math.ceil(giftsSubset.length / app.getItemsPerPage()) || 1;
 
             for (let i = 0; i < totalGiftPages; i++) {
               const pageGifts = giftsSubset.slice(i * app.getItemsPerPage(), (i + 1) * app.getItemsPerPage());
               const pageContainer = document.createElement("div");
-              pageContainer.className = "print-page"; // 鑷姩搴旂敤鑳屾櫙鍥?CSS 鍙橀噺
+              pageContainer.className = "print-page"; // 自动应用背景图 CSS 变量
               const content = document.createElement("div");
               content.className = "print-book-content";
               this.renderGiftBookForPrint(content, pageGifts);
@@ -1655,25 +1654,25 @@ export function bootGiftBookApp() {
 
               pageContainer.innerHTML += `
                     <div class="print-footer">
-                      <p>鐢熸垚鏃ユ湡: ${new Date().toLocaleString("sv-SE")}</p>
-                      <p class="print-page-number">绗?${i + 1} / ${totalGiftPages} 椤?${partInfo}</p>
+                      <p>生成日期: ${new Date().toLocaleString("sv-SE")}</p>
+                      <p class="print-page-number">第 ${i + 1} / ${totalGiftPages} 页 ${partInfo}</p>
                       <div class="print-footer-totals">
-                        <span class="total-amount-print">鏈〉灏忚: ${Utils.formatCurrency(pageSubtotal)}</span>
+                        <span class="total-amount-print">本页小计: ${Utils.formatCurrency(pageSubtotal)}</span>
                       </div>
                     </div>`;
               printView.appendChild(pageContainer);
             }
 
-            // 闄勫綍涓庣粺璁?
+            // 附录与统计
             printOptions.printAppendix && this.appendAppendixPages(printView, giftsSubset, partIndex, totalParts);
             printOptions.printSummary && this.appendSummaryPage(printView, giftsSubset, partIndex);
 
-            // 灏佸簳椤?
+            // 封底页
             if (printOptions.printEndPage) {
               const afterPage = document.createElement("div");
               afterPage.className = "print-page print-cover-page";
-              // 灏佸簳鏆傛湭鍋氳嚜瀹氫箟鍙橀噺锛屼繚鎸佸師鏍?
-              afterPage.innerHTML = `<div class="w-full h-full" style="background: url('/cover2.jpg') center/cover no-repeat;"></div>`;
+              // 封底暂未做自定义变量，保持原样
+              afterPage.innerHTML = `<div class="w-full h-full" style="background: url('./static/cover2.jpg') center/cover no-repeat;"></div>`;
               printView.appendChild(afterPage);
             }
 
@@ -1693,7 +1692,7 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 瀵煎嚭浜嬮」鏁版嵁涓?JSON锛堟槑鏂囧浠斤級
+         * 导出事项数据为 JSON（明文备份）
          */
         async exportEventAsJson() {
           const app = this.app;
@@ -1741,32 +1740,32 @@ export function bootGiftBookApp() {
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
 
-            app.ui.showNotification("JSON 澶囦唤宸插鍑恒€?, "success");
+            app.ui.showNotification("JSON 备份已导出。", "success");
           } catch (error) {
-            console.error("瀵煎嚭 JSON 澶囦唤澶辫触:", error);
-            app.ui.showNotification("瀵煎嚭 JSON 鏂囦欢澶辫触锛岃閲嶈瘯銆?, "error");
+            console.error("导出 JSON 备份失败:", error);
+            app.ui.showNotification("导出 JSON 文件失败，请重试。", "error");
           }
         }
 
         /**
-         * 瀵煎嚭浜嬮」鏁版嵁涓轰簩杩涘埗鍔犲瘑澶囦唤
-         * 鏂囦欢鏍煎紡锛歔8瀛楄妭鏂囦欢澶碷 + [AES 瀵嗘枃瀛楄妭娴乚
-         * 鏂囦欢澶寸粨鏋勶細
+         * 导出事项数据为二进制加密备份
+         * 文件格式：[8字节文件头] + [AES 密文字节流]
+         * 文件头结构：
          *   - 0-3: Magic Number "EGLB" (0x45 0x47 0x4C 0x42)
-         *   - 4:   鐗堟湰鍙?(0x01)
-         *   - 5-7: 淇濈暀瀛楄妭
+         *   - 4:   版本号 (0x01)
+         *   - 5-7: 保留字节
          */
         async exportEventAsBinary() {
           const app = this.app;
           if (!app.currentEvent) return;
 
           try {
-            // 瀹氫箟鏂囦欢鏍煎紡甯搁噺
+            // 定义文件格式常量
             const MAGIC_HEADER = [0x45, 0x47, 0x4c, 0x42]; // "EGLB"
             const FILE_VERSION = 0x01;
             const HEADER_LENGTH = 8;
 
-            // 鑾峰彇骞跺鐞嗙ぜ閲戞暟鎹?
+            // 获取并处理礼金数据
             const eventId = app.currentEvent.id;
             const rawGifts = await app.giftRepository.fetchGiftsByEvent(eventId);
 
@@ -1783,7 +1782,7 @@ export function bootGiftBookApp() {
               };
             });
 
-            // 鍑嗗瀵煎嚭鏁版嵁锛堢Щ闄ゅ瘑鐮佸搱甯岋級
+            // 准备导出数据（移除密码哈希）
             const safeEvent = { ...app.currentEvent };
             delete safeEvent.passwordHash;
 
@@ -1794,35 +1793,35 @@ export function bootGiftBookApp() {
               gifts: sanitizedGifts,
             };
 
-            // 鍔犲瘑鏁翠釜 payload
+            // 加密整个 payload
             const encryptedPayloadString = CryptoService.encrypt(JSON.stringify(payload), app.currentPassword);
 
-            // 鐢熸垚鏂囦欢鍚?
+            // 生成文件名
             const safeName = (app.currentEvent.name || "event").replace(/[\\/:*?"<>|]/g, "_");
             const timestamp = Utils.formatTimestampForFilename();
             const filename = `${safeName}_${timestamp}.bin`;
 
-            // 鏋勫缓鏂囦欢澶?
+            // 构建文件头
             const header = new Uint8Array(HEADER_LENGTH);
-            header.set(MAGIC_HEADER, 0); // 瀛楄妭 0-3: Magic Number
-            header[4] = FILE_VERSION; // 瀛楄妭 4: 鐗堟湰鍙?
-            header[5] = 0x00; // 瀛楄妭 5-7: 淇濈暀
+            header.set(MAGIC_HEADER, 0); // 字节 0-3: Magic Number
+            header[4] = FILE_VERSION; // 字节 4: 版本号
+            header[5] = 0x00; // 字节 5-7: 保留
             header[6] = 0x00;
             header[7] = 0x00;
 
-            // 灏?Base64 瀵嗘枃杞崲涓哄師濮嬪瓧鑺傛祦
+            // 将 Base64 密文转换为原始字节流
             const binaryString = atob(encryptedPayloadString);
             const payloadBytes = new Uint8Array(binaryString.length);
             for (let i = 0; i < binaryString.length; i++) {
               payloadBytes[i] = binaryString.charCodeAt(i);
             }
 
-            // 缁勫悎鏂囦欢澶村拰鏁版嵁浣?
+            // 组合文件头和数据体
             const finalBuffer = new Uint8Array(header.length + payloadBytes.length);
             finalBuffer.set(header, 0);
             finalBuffer.set(payloadBytes, header.length);
 
-            // 鍒涘缓 Blob 骞朵笅杞?
+            // 创建 Blob 并下载
             const blob = new Blob([finalBuffer], { type: "application/octet-stream" });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
@@ -1833,61 +1832,61 @@ export function bootGiftBookApp() {
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
 
-            app.ui.showNotification("鍔犲瘑澶囦唤宸插鍑恒€?, "success");
+            app.ui.showNotification("加密备份已导出。", "success");
           } catch (error) {
-            console.error("瀵煎嚭鍔犲瘑澶囦唤澶辫触:", error);
-            app.ui.showNotification("瀵煎嚭鍔犲瘑澶囦唤澶辫触锛岃閲嶈瘯銆?, "error");
+            console.error("导出加密备份失败:", error);
+            app.ui.showNotification("导出加密备份失败，请重试。", "error");
           }
         }
 
         /**
-         * 浠庡姞瀵嗗浠芥枃浠舵仮澶嶄簨椤规暟鎹?
-         * @param {File} file - 澶囦唤鏂囦欢锛堝繀椤绘槸甯︽枃浠跺ご鐨勪簩杩涘埗鏍煎紡锛?
+         * 从加密备份文件恢复事项数据
+         * @param {File} file - 备份文件（必须是带文件头的二进制格式）
          */
         async importEventFromBinary(file) {
           const app = this.app;
           if (!app.currentEvent || !file) {
-            app.ui.showNotification("璇峰厛閫夋嫨瑕佸鍏ョ殑澶囦唤鏂囦欢銆?, "error");
+            app.ui.showNotification("请先选择要导入的备份文件。", "error");
             return;
           }
 
-          // 鍦ㄥ脊鍑哄叾浠栭獙璇佸脊绐椾箣鍓嶇紦瀛樺閫夋鐘舵€侊紝閬垮厤 DOM 琚浛鎹㈠悗璇诲彇澶辫触
+          // 在弹出其他验证弹窗之前缓存复选框状态，避免 DOM 被替换后读取失败
           const shouldClearOldData = !!document.getElementById("clear-old-data-on-import")?.checked;
 
           try {
-            // 瀹氫箟鏂囦欢鏍煎紡甯搁噺
+            // 定义文件格式常量
             const MAGIC_HEADER = [0x45, 0x47, 0x4c, 0x42]; // "EGLB"
             const FILE_VERSION = 0x01;
             const HEADER_LENGTH = 8;
 
-            // 姝ラ1锛氶獙璇佸綋鍓嶄簨椤圭殑绠＄悊瀵嗙爜
-            const currentEventPassword = await app.requestAdminPassword("瀵煎叆楠岃瘉", "璇疯緭鍏ュ綋鍓嶄簨椤圭殑绠＄悊瀵嗙爜浠ョ户缁€?, app.currentEvent.passwordHash, true);
+            // 步骤1：验证当前事项的管理密码
+            const currentEventPassword = await app.requestAdminPassword("导入验证", "请输入当前事项的管理密码以继续。", app.currentEvent.passwordHash, true);
             if (currentEventPassword === null) return;
 
-            // 姝ラ2锛氳鍙栧苟楠岃瘉鏂囦欢鏍煎紡
+            // 步骤2：读取并验证文件格式
             const arrayBuffer = await file.arrayBuffer();
             const fileBytes = new Uint8Array(arrayBuffer);
 
-            // 楠岃瘉鏂囦欢鏈€灏忛暱搴?
+            // 验证文件最小长度
             if (fileBytes.length < HEADER_LENGTH) {
-              app.ui.showNotification("鏂囦欢鏍煎紡閿欒锛氭枃浠惰繃灏忋€?, "error");
+              app.ui.showNotification("文件格式错误：文件过小。", "error");
               return;
             }
 
-            // 楠岃瘉 Magic Number
+            // 验证 Magic Number
             if (fileBytes[0] !== MAGIC_HEADER[0] || fileBytes[1] !== MAGIC_HEADER[1] || fileBytes[2] !== MAGIC_HEADER[2] || fileBytes[3] !== MAGIC_HEADER[3]) {
-              app.ui.showNotification("鏂囦欢鏍煎紡閿欒锛氫笉鏄湁鏁堢殑澶囦唤鏂囦欢銆?, "error");
+              app.ui.showNotification("文件格式错误：不是有效的备份文件。", "error");
               return;
             }
 
-            // 楠岃瘉鐗堟湰鍙?
+            // 验证版本号
             const version = fileBytes[4];
             if (version > FILE_VERSION) {
-              app.ui.showNotification(`鏂囦欢鐗堟湰 (v${version}) 杩囬珮锛屽綋鍓嶇郴缁熸渶楂樻敮鎸?v${FILE_VERSION}銆俙, "error");
+              app.ui.showNotification(`文件版本 (v${version}) 过高，当前系统最高支持 v${FILE_VERSION}。`, "error");
               return;
             }
 
-            // 姝ラ3锛氭彁鍙栧苟瑙ｅ瘑鏁版嵁锛堝瘑鏂囧凡涓哄師濮嬪瓧鑺傛祦锛?
+            // 步骤3：提取并解密数据（密文已为原始字节流）
             const payloadBytes = fileBytes.slice(HEADER_LENGTH);
             let binaryString = "";
             const chunkSize = 0x8000;
@@ -1897,29 +1896,29 @@ export function bootGiftBookApp() {
             }
             const encryptedContent = btoa(binaryString);
 
-            // 灏濊瘯鐢ㄥ綋鍓嶄簨椤瑰瘑鐮佽В瀵?
+            // 尝试用当前事项密码解密
             let decrypted = CryptoService.decrypt(encryptedContent, currentEventPassword);
             let finalPassword = currentEventPassword;
 
-            // 濡傛灉瑙ｅ瘑澶辫触锛岃姹傝緭鍏ュ浠芥枃浠剁殑瀵嗙爜
+            // 如果解密失败，要求输入备份文件的密码
             if (!decrypted) {
               const backupPassword = await new Promise((resolve) => {
                 const content = `
                         <p class="text-sm text-yellow-700 bg-yellow-50 p-3 rounded-md mb-3">
-                          浣跨敤褰撳墠浜嬮」瀵嗙爜瑙ｅ瘑澶辫触銆傚浠芥枃浠跺彲鑳戒娇鐢ㄤ簡涓嶅悓鐨勫瘑鐮併€?
+                          使用当前事项密码解密失败。备份文件可能使用了不同的密码。
                         </p>
                         <input type="password" id="backup-pwd-input"
                                class="w-full p-2 border rounded themed-ring"
-                               placeholder="璇疯緭鍏ュ浠芥枃浠剁殑瑙ｅ瘑瀵嗙爜">
+                               placeholder="请输入备份文件的解密密码">
                       `;
-                app.ui.showModal("杈撳叆瑙ｅ瘑瀵嗙爜", content, [
+                app.ui.showModal("输入解密密码", content, [
                   {
-                    text: "鍙栨秷",
+                    text: "取消",
                     class: "themed-button-secondary border px-4 py-2 rounded",
                     handler: () => resolve(null),
                   },
                   {
-                    text: "纭",
+                    text: "确认",
                     class: "themed-button-primary px-4 py-2 rounded",
                     handler: () => {
                       const pwd = document.getElementById("backup-pwd-input").value;
@@ -1931,7 +1930,7 @@ export function bootGiftBookApp() {
               });
 
               if (backupPassword === null) {
-                app.ui.showNotification("宸插彇娑堝鍏ャ€?, "info");
+                app.ui.showNotification("已取消导入。", "info");
                 return;
               }
 
@@ -1939,25 +1938,25 @@ export function bootGiftBookApp() {
               finalPassword = backupPassword;
 
               if (!decrypted) {
-                app.ui.showNotification("瑙ｅ瘑澶辫触锛屽瘑鐮侀敊璇垨鏂囦欢宸叉崯鍧忋€?, "error");
+                app.ui.showNotification("解密失败，密码错误或文件已损坏。", "error");
                 return;
               }
             }
 
-            // 姝ラ4锛氳В鏋愭暟鎹?
+            // 步骤4：解析数据
             const payload = JSON.parse(decrypted);
             const giftRecords = Array.isArray(payload?.gifts) ? payload.gifts : [];
 
-            // 姝ラ5锛氭牴鎹紦瀛樼殑鍕鹃€夌姸鎬佸喅瀹氭槸鍚︽竻绌烘棫鏁版嵁
+            // 步骤5：根据缓存的勾选状态决定是否清空旧数据
             if (shouldClearOldData) {
               const existingGifts = await app.giftRepository.fetchGiftsByEvent(app.currentEvent.id);
               for (const gift of existingGifts) {
                 await app.giftRepository.deleteGift(gift.id);
               }
-              app.ui.showNotification("鏃ф暟鎹凡娓呯┖銆?, "info");
+              app.ui.showNotification("旧数据已清空。", "info");
             }
 
-            // 姝ラ6锛氬鍏ョぜ閲戞暟鎹?
+            // 步骤6：导入礼金数据
             for (const record of giftRecords) {
               let encryptedData = record.encryptedData;
               if (!encryptedData && record.data) {
@@ -1973,7 +1972,7 @@ export function bootGiftBookApp() {
               });
             }
 
-            // 姝ラ7锛氭洿鏂颁簨椤逛俊鎭?
+            // 步骤7：更新事项信息
             const eventSnapshot = payload?.event || {};
             const mergedPrintOptions = {
               ...DEFAULT_PRINT_OPTIONS,
@@ -1990,19 +1989,19 @@ export function bootGiftBookApp() {
             await app.giftRepository.updateEvent(updatedEvent);
             app.currentEvent = updatedEvent;
 
-            // 姝ラ8锛氬埛鏂扮晫闈?
+            // 步骤8：刷新界面
             await app.giftManager.loadGiftsForCurrentEvent();
             app.session.save(app.currentEvent, app.currentPassword);
 
             app.ui.closeModal();
-            app.ui.showNotification(`鏁版嵁鎭㈠鎴愬姛锛?{shouldClearOldData ? "鏇挎崲" : "杩藉姞"}浜?${giftRecords.length} 鏉¤褰曘€俙, "success");
+            app.ui.showNotification(`数据恢复成功，${shouldClearOldData ? "替换" : "追加"}了 ${giftRecords.length} 条记录。`, "success");
           } catch (error) {
-            console.error("瀵煎叆澶囦唤澶辫触:", error);
-            app.ui.showNotification("瀵煎叆澶辫触锛屾枃浠舵牸寮忓彲鑳芥棤鏁堟垨宸叉崯鍧忋€?, "error");
+            console.error("导入备份失败:", error);
+            app.ui.showNotification("导入失败，文件格式可能无效或已损坏。", "error");
           }
         }
         /**
-         * 鏄剧ず澶囦唤/鎭㈠寮圭獥锛屾彁渚?JSON 涓?BIN 瀵煎嚭鎴栧鍏?
+         * 显示备份/恢复弹窗，提供 JSON 与 BIN 导出或导入
          */
         showBackupRestoreModal() {
           const app = this.app;
@@ -2011,27 +2010,27 @@ export function bootGiftBookApp() {
           const modalContent = `
                         <div class="space-y-5 text-left">
                           <div>
-                            <p class="text-sm text-gray-600">鍙皢褰撳墠浜嬮」鏁版嵁澶囦唤涓?JSON 鎴栨暟鎹簱锛圔IN锛夋枃浠讹紝浜﹀彲瀵煎叆 BIN 鏂囦欢杩涜鎭㈠銆?/p>
+                            <p class="text-sm text-gray-600">可将当前事项数据备份为 JSON 或数据库（BIN）文件，亦可导入 BIN 文件进行恢复。</p>
                           </div>
                           <div class="grid sm:grid-cols-2 gap-3">
-                            <button id="btn-backup-json" class="w-full themed-button-secondary border px-4 py-2 rounded">瀵煎嚭 JSON 鏁版嵁</button>
-                            <button id="btn-backup-bin" class="w-full themed-button-primary px-4 py-2 rounded">瀵煎嚭澶囦唤 (BIN)</button>
+                            <button id="btn-backup-json" class="w-full themed-button-secondary border px-4 py-2 rounded">导出 JSON 数据</button>
+                            <button id="btn-backup-bin" class="w-full themed-button-primary px-4 py-2 rounded">导出备份 (BIN)</button>
                           </div>
                           <div class="border-t pt-4 space-y-3">
-                            <label class="block text-sm font-medium text-gray-700">瀵煎叆澶囦唤鏂囦欢</label>
+                            <label class="block text-sm font-medium text-gray-700">导入备份文件</label>
                             <input type="file" id="backup-import-file" accept=".bin" class="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300" />
                             <div class="flex items-center mt-2">
                               <input type="checkbox" id="clear-old-data-on-import" class="h-4 w-4 themed-ring rounded border-gray-300">
-                              <label for="clear-old-data-on-import" class="ml-2 block text-sm text-gray-800">瀵煎叆鍓嶆竻绌哄綋鍓嶄簨椤圭殑鎵€鏈夋棫鏁版嵁</label>
+                              <label for="clear-old-data-on-import" class="ml-2 block text-sm text-gray-800">导入前清空当前事项的所有旧数据</label>
                             </div>
-                            <p class="text-xs text-gray-500 -mt-1">榛樿涓嶅嬀閫夛紝鍗充互杩藉姞鏂瑰紡瀵煎叆鏂版暟鎹€?/p>
-                            <button id="btn-restore-backup" class="w-full themed-button-primary px-4 py-2 rounded">瀵煎叆骞舵仮澶?/button>
-                            <p class="text-xs text-gray-500">瀵煎叆鏃堕渶杈撳叆褰撳墠浜嬮」鐨勭鐞嗗瘑鐮侊紝璇风‘淇濆浠芥潵婧愬彲闈犮€?/p>
+                            <p class="text-xs text-gray-500 -mt-1">默认不勾选，即以追加方式导入新数据。</p>
+                            <button id="btn-restore-backup" class="w-full themed-button-primary px-4 py-2 rounded">导入并恢复</button>
+                            <p class="text-xs text-gray-500">导入时需输入当前事项的管理密码，请确保备份来源可靠。</p>
                           </div>
                         </div>
                       `;
 
-          app.ui.showModal("澶囦唤 / 鎭㈠鏁版嵁", modalContent, [{ text: "鍏抽棴", class: "themed-button-secondary border px-4 py-2 rounded" }]);
+          app.ui.showModal("备份 / 恢复数据", modalContent, [{ text: "关闭", class: "themed-button-secondary border px-4 py-2 rounded" }]);
 
           setTimeout(() => {
             const exportJsonBtn = document.getElementById("btn-backup-json");
@@ -2058,7 +2057,7 @@ export function bootGiftBookApp() {
             if (restoreBtn) {
               restoreBtn.addEventListener("click", async () => {
                 if (!fileInput?.files?.length) {
-                  app.ui.showNotification("璇峰厛閫夋嫨瑕佸鍏ョ殑澶囦唤鏂囦欢銆?, "error");
+                  app.ui.showNotification("请先选择要导入的备份文件。", "error");
                   return;
                 }
                 restoreBtn.disabled = true;
@@ -2070,8 +2069,8 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 棣栨鎵撳嵃鍓嶆彁绀虹敤鎴风‘璁ゅ紩鎿庝笌璁拌处浜轰俊鎭?
-         * 缂撳瓨缁撴灉浠ラ伩鍏嶉噸澶嶅脊绐?
+         * 首次打印前提示用户确认引擎与记账人信息
+         * 缓存结果以避免重复弹窗
          */
         async ensurePrintPreferences() {
           const app = this.app;
@@ -2090,66 +2089,66 @@ export function bootGiftBookApp() {
             const currentPrintEndPage = !!currentPrintOptions.printEndPage;
 
             const engineSelector = isMobile
-              ? `<p class="text-sm text-gray-600 bg-red-50 border border-red-200 rounded p-3">妫€娴嬪埌绉诲姩绔幆澧冿紝绯荤粺灏嗚嚜鍔ㄤ娇鐢?<strong>PDF-LIB</strong> 寮曟搸瀵煎嚭銆?/p>`
+              ? `<p class="text-sm text-gray-600 bg-red-50 border border-red-200 rounded p-3">检测到移动端环境，系统将自动使用 <strong>PDF-LIB</strong> 引擎导出。</p>`
               : `<div class="space-y-2">
                               <label class="flex items-center gap-2 cursor-pointer">
                                 <input type="radio" name="print-engine-select" value="browser" class="themed-text-radio themed-ring" ${currentEngine === "browser" ? "checked" : ""}>
-                                <span class="text-sm">娴忚鍣ㄥ彟瀛樹负PDF锛堟枃浠跺皬,涓嶅吋瀹圭Щ鍔ㄧ锛?/span>
+                                <span class="text-sm">浏览器另存为PDF（文件小,不兼容移动端）</span>
                               </label>
                               <label class="flex items-center gap-2 cursor-pointer">
                                 <input type="radio" name="print-engine-select" value="pdf-lib" class="themed-text-radio themed-ring" ${currentEngine === "pdf-lib" ? "checked" : ""}>
-                                <span class="text-sm">PDF-LIB.JS寮曟搸锛堟枃浠剁◢澶?鍏煎PC/绉诲姩绔級</span>
+                                <span class="text-sm">PDF-LIB.JS引擎（文件稍大,兼容PC/移动端）</span>
                               </label>
                             </div>`;
 
             const modalContent = `
                         <div class="space-y-5 text-left">
-                          <p class="text-sm text-gray-600">棣栨鎵撳嵃鍓嶅缓璁ˉ鍏呭叧閿俊鎭紝鍚庣画鍙湪鈥滆缃簨椤光€濅腑缁х画淇敼銆?/p>
+                          <p class="text-sm text-gray-600">首次打印前建议补充关键信息，后续可在“设置事项”中继续修改。</p>
                           <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">璁拌处浜?<span class="text-xs text-red-400">(寤鸿濉啓锛岄潪蹇呭～)</span></label>
-                            <input id="print-first-recorder" type="text" class="w-full p-2 border rounded themed-ring" maxlength="30" value="${currentRecorder}" placeholder="绀轰緥锛氱帇浜?>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">记账人 <span class="text-xs text-red-400">(建议填写，非必填)</span></label>
+                            <input id="print-first-recorder" type="text" class="w-full p-2 border rounded themed-ring" maxlength="30" value="${currentRecorder}" placeholder="示例：王五">
                           </div>
                           <div>
-                            <span class="block text-sm font-medium text-gray-700 mb-1">PDF娓叉煋鏂瑰紡</span>
+                            <span class="block text-sm font-medium text-gray-700 mb-1">PDF渲染方式</span>
                             ${engineSelector}
                             <div class="mt-3 space-y-2">
-                              <span class="block text-sm font-medium text-gray-700 mb-1">绀肩翱闄勯〉閫夐」</span>
+                              <span class="block text-sm font-medium text-gray-700 mb-1">礼簿附页选项</span>
                               <div class="flex gap-2 text-sm flex-wrap text-gray-700">
                                 <label class="flex items-center gap-2 text-sm text-gray-700">
                                   <input id="print-init-cover" type="checkbox" class="w-4 h-4 themed-ring rounded" ${currentPrintOptions.printCover ? "checked" : ""}>
-                                  <span>灏侀潰</span>
+                                  <span>封面</span>
                                 </label>
                                 <label class="flex items-center gap-2 text-sm text-gray-700">
                                   <input id="print-init-show-cover-title" type="checkbox" class="w-4 h-4 themed-ring rounded" ${currentPrintOptions.showCoverTitle ? "checked" : ""}>
-                                  <span>灏侀潰鏍囬</span>
+                                  <span>封面标题</span>
                                 </label>
                                 <label class="flex items-center gap-2 text-sm text-gray-700">
                                   <input id="print-init-appendix" type="checkbox" class="w-4 h-4 themed-ring rounded" ${currentPrintOptions.printAppendix ? "checked" : ""}>
-                                  <span>澶囨敞闄勫綍</span>
+                                  <span>备注附录</span>
                                 </label>
                                 <label class="flex items-center gap-2 text-sm text-gray-700">
                                   <input id="print-init-summary" type="checkbox" class="w-4 h-4 themed-ring rounded" ${currentPrintOptions.printSummary ? "checked" : ""}>
-                                  <span>鎬昏椤?/span>
+                                  <span>总计页</span>
                                 </label>
                                 <label class="flex items-center gap-2 text-sm text-gray-700">
                                   <input id="print-init-end-page" type="checkbox" class="w-4 h-4 themed-ring rounded" ${currentPrintEndPage ? "checked" : ""}>
-                                  <span>灏佸簳</span>
+                                  <span>封底</span>
                                 </label>
                               </div>
                             </div>
-                            <p class="text-xs text-gray-400 mt-2">鍙湪鈥滆缃簨椤光€濅腑鍐嶆璋冩暣銆?/p>
+                            <p class="text-xs text-gray-400 mt-2">可在“设置事项”中再次调整。</p>
                           </div>
                         </div>
                       `;
 
-            app.ui.showModal("鎵撳嵃鍒濆鍖?, modalContent, [
+            app.ui.showModal("打印初始化", modalContent, [
               {
-                text: "鍙栨秷",
+                text: "取消",
                 class: "themed-button-secondary border px-4 py-2 rounded",
                 handler: () => resolve(false),
               },
               {
-                text: "纭骞剁户缁?,
+                text: "确认并继续",
                 class: "themed-button-primary px-4 py-2 rounded",
                 keepOpen: true,
                 handler: async () => {
@@ -2186,8 +2185,8 @@ export function bootGiftBookApp() {
                     app.ui.closeModal();
                     resolve(true);
                   } catch (error) {
-                    console.error("棣栨鎵撳嵃閰嶇疆淇濆瓨澶辫触:", error);
-                    app.ui.showNotification("淇濆瓨鎵撳嵃閰嶇疆澶辫触锛岃閲嶈瘯銆?, "error");
+                    console.error("首次打印配置保存失败:", error);
+                    app.ui.showNotification("保存打印配置失败，请重试。", "error");
                     resolve(false);
                   }
                 },
@@ -2208,13 +2207,13 @@ export function bootGiftBookApp() {
           const amountRow = document.createElement("div");
           amountRow.className = "gift-book-row";
 
-          const typeText = app.currentEvent.theme === "theme-solemn" ? "绀奸噾" : "璐虹ぜ";
+          const typeText = app.currentEvent.theme === "theme-solemn" ? "礼金" : "贺礼";
 
           for (let i = 0; i < app.getItemsPerPage(); i++) {
             const gift = gifts[i];
             const giftIndex = isPrint ? null : (app.currentPage - 1) * app.getItemsPerPage() + i;
 
-            // 濮撳悕鍗曞厓鏍?
+            // 姓名单元格
             const nameCell = document.createElement("div");
             nameCell.className = "book-cell name-cell";
             if (gift?.data) {
@@ -2224,13 +2223,13 @@ export function bootGiftBookApp() {
             }
             nameRow.appendChild(nameCell);
 
-            // 绫诲瀷鍗曞厓鏍?
+            // 类型单元格
             const typeCell = document.createElement("div");
             typeCell.className = "book-cell type-cell";
             typeCell.textContent = typeText;
             typeRow.appendChild(typeCell);
 
-            // 閲戦鍗曞厓鏍?
+            // 金额单元格
             const amountCell = document.createElement("div");
             amountCell.className = "book-cell amount-cell";
             if (gift?.data) {
@@ -2246,9 +2245,9 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 娓叉煋鎵撳嵃鐢ㄧ殑绀肩翱鍐呭
-         * @param {HTMLElement} container - 鎵撳嵃 DOM 瀹瑰櫒
-         * @param {Array} gifts - 宸茶繃婊ょ殑绀奸噾璁板綍
+         * 渲染打印用的礼簿内容
+         * @param {HTMLElement} container - 打印 DOM 容器
+         * @param {Array} gifts - 已过滤的礼金记录
          */
         renderGiftBookForPrint(container, gifts) {
           const app = this.app;
@@ -2257,11 +2256,11 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 闄勫姞澶囨敞闄勫綍椤碉紙鏀寔闀挎枃鏈垎椤碉級
-         * @param {HTMLElement} printView - 鎵撳嵃瑙嗗浘鏍硅妭鐐?
-         * @param {Array} gifts - 鏈夋晥绀奸噾璁板綍
-         * @param {number|null} partIndex - 鍒嗘壒缂栧彿
-         * @param {number|null} totalParts - 鎬诲垎鎵规暟
+         * 附加备注附录页（支持长文本分页）
+         * @param {HTMLElement} printView - 打印视图根节点
+         * @param {Array} gifts - 有效礼金记录
+         * @param {number|null} partIndex - 分批编号
+         * @param {number|null} totalParts - 总分批数
          */
         appendAppendixPages(printView, gifts, partIndex = null, totalParts = null) {
           const app = this.app;
@@ -2272,7 +2271,7 @@ export function bootGiftBookApp() {
               const positionInPage = ((recordIndex - 1) % app.getItemsPerPage()) + 1;
               return {
                 ...g,
-                indexLabel: `绗?{pageNumber}椤电${positionInPage}浜篳,
+                indexLabel: `第${pageNumber}页第${positionInPage}人`,
               };
             })
             .filter((g) => g.data && app.hasRemarkData(g.data));
@@ -2284,7 +2283,7 @@ export function bootGiftBookApp() {
           const ruler = document.createElement("div");
           ruler.style.cssText = `
                           position: absolute; top: -9999px; left: -9999px; visibility: hidden;
-                          font-family: "KaiTi", "妤蜂綋", serif; font-weight: bold; letter-spacing: 2px;
+                          font-family: "KaiTi", "楷体", serif; font-weight: bold; letter-spacing: 2px;
                           word-break: break-word; padding: 8px; line-height: 2em; width: 103.14mm;
                         `;
           document.body.appendChild(ruler);
@@ -2315,7 +2314,7 @@ export function bootGiftBookApp() {
                 }
               }
               let splitIndex = bestFitIndex;
-              const breakChars = new Set([" ", ",", "锛?, ".", "銆?, ";", "锛?, "!", "锛?, "?", "锛?, "\n"]);
+              const breakChars = new Set([" ", ",", "，", ".", "。", ";", "；", "!", "！", "?", "？", "\n"]);
               for (let i = bestFitIndex - 1; i > bestFitIndex / 2; i--) {
                 if (breakChars.has(fullText[i])) {
                   splitIndex = i + 1;
@@ -2366,22 +2365,22 @@ export function bootGiftBookApp() {
               const tableRows = pageItems
                 .map((item) => {
                   const nameCellContent = item.gift.data.name;
-                  const indexCellContent = item.isContinuation ? " (缁笂)" : item.gift.indexLabel;
-                  return `<tr><td>${nameCellContent}</td><td>${indexCellContent}</td><td class="text-left">${item.remarkText || "鏃?}</td></tr>`;
+                  const indexCellContent = item.isContinuation ? " (续上)" : item.gift.indexLabel;
+                  return `<tr><td>${nameCellContent}</td><td>${indexCellContent}</td><td class="text-left">${item.remarkText || "无"}</td></tr>`;
                 })
                 .join("");
 
               const partInfo = partIndex ? `P${partIndex}/P${totalParts}` : "";
 
               appendixPage.innerHTML = `
-                            ${pageIndex === 0 ? '<h1 class="print-header">闄勫綍锛氬瀹㈠娉?/h1>' : ""}
+                            ${pageIndex === 0 ? '<h1 class="print-header">附录：宾客备注</h1>' : ""}
                             <table class="print-appendix-table text-lg" style="line-height: 2em;">
-                              <thead><tr><th>濮撳悕</th><th>璁板綍浣嶇疆</th><th>澶囨敞淇℃伅</th></tr></thead>
+                              <thead><tr><th>姓名</th><th>记录位置</th><th>备注信息</th></tr></thead>
                               <tbody>${tableRows}</tbody>
                             </table>
                             <div class="print-footer">
-                              <p>鐢熸垚鏃ユ湡: ${new Date().toLocaleString("sv-SE")}</p>
-                              <p class="print-page-number">澶囨敞闄勫綍 绗?${pageIndex + 1} / ${pages.length} 椤?/p>
+                              <p>生成日期: ${new Date().toLocaleString("sv-SE")}</p>
+                              <p class="print-page-number">备注附录 第 ${pageIndex + 1} / ${pages.length} 页</p>
                               <div class="print-footer-totals">${partInfo}</div>
                             </div>
                           `;
@@ -2393,20 +2392,20 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 闄勫姞缁熻鎬昏椤?
-         * @param {HTMLElement} printView - 鎵撳嵃瑙嗗浘鏍硅妭鐐?
-         * @param {Array} gifts - 鏈夋晥绀奸噾璁板綍锛堜笉鍚綔搴燂級
-         * @param {number|null} partIndex - 鍒嗘壒缂栧彿
+         * 附加统计总览页
+         * @param {HTMLElement} printView - 打印视图根节点
+         * @param {Array} gifts - 有效礼金记录（不含作废）
+         * @param {number|null} partIndex - 分批编号
          */
         appendSummaryPage(printView, gifts, partIndex = null) {
           const app = this.app;
           if (gifts.length === 0) return;
 
           const stats = {
-            鐜伴噾: { count: 0, amount: 0 },
-            鏀粯瀹? { count: 0, amount: 0 },
-            寰俊: { count: 0, amount: 0 },
-            鍏朵粬: { count: 0, amount: 0 },
+            现金: { count: 0, amount: 0 },
+            支付宝: { count: 0, amount: 0 },
+            微信: { count: 0, amount: 0 },
+            其他: { count: 0, amount: 0 },
           };
           gifts.forEach((gift) => {
             const type = gift.data.type;
@@ -2423,30 +2422,30 @@ export function bootGiftBookApp() {
 
           const tableRows = Object.entries(stats)
             .filter(([type, data]) => data.count > 0)
-            .map(([type, data]) => `<tr><td>${type}</td><td>${data.count} 浜?/td><td>${Utils.formatCurrency(data.amount)}</td></tr>`)
+            .map(([type, data]) => `<tr><td>${type}</td><td>${data.count} 人</td><td>${Utils.formatCurrency(data.amount)}</td></tr>`)
             .join("");
 
           let totalRowsHtml = "";
           if (partIndex) {
-            // 鍒嗘壒鎵撳嵃鐨勫満鏅?
+            // 分批打印的场景
             totalRowsHtml = `
                         <tr class="themed-text">
-                          <td>鏈儴鍒嗘€昏</td>
-                          <td>${partTotalCount} 浜?/td>
+                          <td>本部分总计</td>
+                          <td>${partTotalCount} 人</td>
                           <td>${Utils.formatCurrency(partTotalAmount)}</td>
                         </tr>
                         <tr class="themed-text">
-                          <td>浜嬮」鎬婚噾棰?/td>
-                          <td>${app.totalGiversCache} 浜?/td>
+                          <td>事项总金额</td>
+                          <td>${app.totalGiversCache} 人</td>
                           <td>${Utils.formatCurrency(app.totalAmountCache)}</td>
                         </tr>
                       `;
           } else {
-            // 瀹屾暣鎵撳嵃鐨勫満鏅?
+            // 完整打印的场景
             totalRowsHtml = `
                         <tr>
-                          <td>鎬昏</td>
-                          <td>${partTotalCount} 浜?/td>
+                          <td>总计</td>
+                          <td>${partTotalCount} 人</td>
                           <td>${Utils.formatCurrency(partTotalAmount)}</td>
                         </tr>
                       `;
@@ -2455,10 +2454,10 @@ export function bootGiftBookApp() {
           const summaryPage = document.createElement("div");
           summaryPage.className = "print-page";
           summaryPage.innerHTML = `
-                      <h1 class="print-header">鎬?璁?/h1>
+                      <h1 class="print-header">总 计</h1>
                       <table class="print-appendix-table text-xl" style="line-height: 2em; margin-top: 20px;">
                         <thead>
-                          <tr><th style="width: 20%;">閫佺ぜ鏂瑰紡</th><th style="width: 20%;">浜烘暟</th><th>鎬婚噾棰?/th></tr>
+                          <tr><th style="width: 20%;">送礼方式</th><th style="width: 20%;">人数</th><th>总金额</th></tr>
                         </thead>
                         <tbody>
                           ${tableRows}
@@ -2467,7 +2466,7 @@ export function bootGiftBookApp() {
                       </table>
                       <div class="w-[90%] mx-auto flex justify-end mt-20 pr-20">
                         <div class="text-center space-y-2 font-bold text-2xl">
-                          ${app.currentEvent.recorder ? `<p>璁拌处浜?  ${app.currentEvent.recorder}</p>` : ""}
+                          ${app.currentEvent.recorder ? `<p>记账人:  ${app.currentEvent.recorder}</p>` : ""}
                           <p>${eventDateInfo.formattedDisplay}</p>
                         </div>
                       </div>`;
@@ -2475,18 +2474,18 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 瀵煎嚭 Excel
-         * 鐢熸垚绀奸噾鏄庣粏鍙婄ぜ鍝佹竻鍗曪紙濡傛湁锛?
+         * 导出 Excel
+         * 生成礼金明细及礼品清单（如有）
          */
         exportToExcel() {
           const app = this.app;
           if (app.gifts.length === 0) {
-            app.ui.showNotification("娌℃湁鍙鍑虹殑鏁版嵁銆?);
+            app.ui.showNotification("没有可导出的数据。");
             return;
           }
 
           const formatHistoryToString = (historyArray) => {
-            if (!historyArray || historyArray.length === 0) return "鏃犱慨鏀硅褰?;
+            if (!historyArray || historyArray.length === 0) return "无修改记录";
             return [...historyArray]
               .reverse()
               .map((record, index) => {
@@ -2503,14 +2502,14 @@ export function bootGiftBookApp() {
           let activeCount = 0;
           let abolishedCount = 0;
 
-          // 鐩存帴閬嶅巻宸叉帓搴忕殑 app.gifts 鏁扮粍
+          // 直接遍历已排序的 app.gifts 数组
           for (let i = 0; i < app.gifts.length; i++) {
             const g = app.gifts[i];
             const isAbolished = g.data.abolished === true;
             const guestLevel = g.data.guestLevel !== undefined ? g.data.guestLevel : 0;
             const guestLevelName = CONFIG.GUEST_LEVELS[guestLevel] || CONFIG.GUEST_LEVELS[0];
 
-            // 澶囨敞澶勭悊 - 鍒嗗埆鎻愬彇鍚勪釜瀛楁
+            // 备注处理 - 分别提取各个字段
             const remarkData = app.normalizeRemarkData(g.data.remarkData);
             const customRemark = remarkData.custom || "";
             const giftRemark = remarkData.gift || "";
@@ -2518,30 +2517,30 @@ export function bootGiftBookApp() {
             const phoneRemark = remarkData.phone || "";
             const addressRemark = remarkData.address || "";
 
-            // 濡傛灉璁板綍鏈夋晥锛堟湭浣滃簾锛変笖绀煎搧澶囨敞涓嶄负绌猴紝鍒欐坊鍔犲埌绀煎搧娓呭崟
+            // 如果记录有效（未作废）且礼品备注不为空，则添加到礼品清单
             if (!isAbolished && giftRemark) {
               giftSheetData.push({
-                濮撳悕: g.data.name,
-                绀煎搧鍚嶇О: giftRemark,
-                鍏崇郴: relationRemark,
-                鐧昏鏃堕棿: new Date(g.data.timestamp).toLocaleString("zh-CN"),
+                姓名: g.data.name,
+                礼品名称: giftRemark,
+                关系: relationRemark,
+                登记时间: new Date(g.data.timestamp).toLocaleString("zh-CN"),
               });
             }
 
             dataToExport.push({
-              濮撳悕: g.data.name,
-              閲戦: g.data.amount,
-              鏀舵绫诲瀷: g.data.type,
-              瀹惧绛夌骇: guestLevelName,
-              澶囨敞: customRemark,
-              绀煎搧: giftRemark,
-              鍏崇郴: relationRemark,
-              鐢佃瘽: phoneRemark,
-              浣忓潃: addressRemark,
-              鐘舵€? isAbolished ? "宸蹭綔搴? : "姝ｅ父",
-              浣滃簾鐞嗙敱: isAbolished ? g.data.abolishReason || "" : "",
-              鐧昏鏃堕棿: new Date(g.data.timestamp).toLocaleString("zh-CN"),
-              淇敼鏃ュ織: formatHistoryToString(g.data.history),
+              姓名: g.data.name,
+              金额: g.data.amount,
+              收款类型: g.data.type,
+              宾客等级: guestLevelName,
+              备注: customRemark,
+              礼品: giftRemark,
+              关系: relationRemark,
+              电话: phoneRemark,
+              住址: addressRemark,
+              状态: isAbolished ? "已作废" : "正常",
+              作废理由: isAbolished ? g.data.abolishReason || "" : "",
+              登记时间: new Date(g.data.timestamp).toLocaleString("zh-CN"),
+              修改日志: formatHistoryToString(g.data.history),
             });
 
             if (isAbolished) {
@@ -2554,54 +2553,54 @@ export function bootGiftBookApp() {
 
           dataToExport.push({});
           dataToExport.push({
-            濮撳悕: "鎬昏",
-            閲戦: totalAmount,
-            鏀舵绫诲瀷: `鏈夋晥璁板綍 ${activeCount} 鏉?浣滃簾 ${abolishedCount} 鏉?鍏?${app.gifts.length} 鏉,
+            姓名: "总计",
+            金额: totalAmount,
+            收款类型: `有效记录 ${activeCount} 条,作废 ${abolishedCount} 条,共 ${app.gifts.length} 条`,
           });
 
           const worksheet = XLSX.utils.json_to_sheet(dataToExport);
 
-          // 璋冩暣鍒楀,涓烘柊澧炵殑鍒楀垎閰嶅悎閫傜殑瀹藉害
+          // 调整列宽,为新增的列分配合适的宽度
           const columnWidths = [
-            { wch: 10 }, // 濮撳悕
-            { wch: 12 }, // 閲戦
-            { wch: 12 }, // 鏀舵绫诲瀷
-            { wch: 10 }, // 瀹惧绛夌骇
-            { wch: 30 }, // 澶囨敞(鑷畾涔?
-            { wch: 20 }, // 绀煎搧 (鍔犲涓€浜?
-            { wch: 15 }, // 鍏崇郴
-            { wch: 18 }, // 鐢佃瘽
-            { wch: 25 }, // 浣忓潃
-            { wch: 10 }, // 鐘舵€?
-            { wch: 30 }, // 浣滃簾鐞嗙敱
-            { wch: 22 }, // 鐧昏鏃堕棿
-            { wch: 60 }, // 淇敼鏃ュ織
+            { wch: 10 }, // 姓名
+            { wch: 12 }, // 金额
+            { wch: 12 }, // 收款类型
+            { wch: 10 }, // 宾客等级
+            { wch: 30 }, // 备注(自定义)
+            { wch: 20 }, // 礼品 (加宽一些)
+            { wch: 15 }, // 关系
+            { wch: 18 }, // 电话
+            { wch: 25 }, // 住址
+            { wch: 10 }, // 状态
+            { wch: 30 }, // 作废理由
+            { wch: 22 }, // 登记时间
+            { wch: 60 }, // 修改日志
           ];
           worksheet["!cols"] = columnWidths;
 
           const workbook = XLSX.utils.book_new();
-          XLSX.utils.book_append_sheet(workbook, worksheet, "绀奸噾鏄庣粏");
+          XLSX.utils.book_append_sheet(workbook, worksheet, "礼金明细");
 
           if (giftSheetData.length > 0) {
-            // 鍒涘缓绀煎搧娓呭崟鐨?worksheet
+            // 创建礼品清单的 worksheet
             const giftWorksheet = XLSX.utils.json_to_sheet(giftSheetData, {
-              header: ["濮撳悕", "绀煎搧鍚嶇О", "鍏崇郴", "鐧昏鏃堕棿"], // 纭繚琛ㄥご椤哄簭
+              header: ["姓名", "礼品名称", "关系", "登记时间"], // 确保表头顺序
             });
 
-            // 涓虹ぜ鍝佹竻鍗曡缃垪瀹?
+            // 为礼品清单设置列宽
             giftWorksheet["!cols"] = [
-              { wch: 10 }, // 濮撳悕
-              { wch: 30 }, // 绀煎搧鍚嶇О
-              { wch: 18 }, // 鍏崇郴
-              { wch: 22 }, // 鐧昏鏃堕棿
+              { wch: 10 }, // 姓名
+              { wch: 30 }, // 礼品名称
+              { wch: 18 }, // 关系
+              { wch: 22 }, // 登记时间
             ];
 
-            // 灏嗘柊鐨?worksheet 闄勫姞鍒板伐浣滅翱涓紝
-            XLSX.utils.book_append_sheet(workbook, giftWorksheet, "绀煎搧娓呭崟");
+            // 将新的 worksheet 附加到工作簿中，
+            XLSX.utils.book_append_sheet(workbook, giftWorksheet, "礼品清单");
           }
           const eventDateInfo = Utils.getEventDateInfo(app.currentEvent.startDateTime);
-          XLSX.writeFile(workbook, `${app.currentEvent.name}-绀奸噾鏄庣粏(${eventDateInfo.localeDate}).xlsx`);
-          app.ui.showNotification("瀵煎嚭鎴愬姛锛?, "success");
+          XLSX.writeFile(workbook, `${app.currentEvent.name}-礼金明细(${eventDateInfo.localeDate}).xlsx`);
+          app.ui.showNotification("导出成功！", "success");
         }
       }
       class StatsService {
@@ -2612,8 +2611,8 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 鏄剧ず缁熻璇︽儏
-         * 鏋勫缓 GridJS 缁熻瑙嗗浘骞舵彁渚涚瓫閫夈€佸鍑鸿兘鍔?
+         * 显示统计详情
+         * 构建 GridJS 统计视图并提供筛选、导出能力
          */
         showStatistics() {
           const app = this.app;
@@ -2626,7 +2625,7 @@ export function bootGiftBookApp() {
             const stats = {
               totalAmount: 0,
               totalGivers: activeGifts.length,
-              byType: { 鐜伴噾: 0, 鏀粯瀹? 0, 寰俊: 0, 鍏朵粬: 0 },
+              byType: { 现金: 0, 支付宝: 0, 微信: 0, 其他: 0 },
               abolishedCount: abolishedGifts.length,
               abolishedAmount: 0,
             };
@@ -2653,52 +2652,52 @@ export function bootGiftBookApp() {
           const statsHtml = `
                       <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                         <div id="grid-container" class="md:col-span-3 relative">
-                          <!-- 绛涢€夋爮 -->
+                          <!-- 筛选栏 -->
                           <div class="w-1/2 flex items-center gap-3 sm:absolute right-0 z-40">
-                            <label class="text-sm font-medium text-gray-700 whitespace-nowrap">绛涢€夋潯浠讹細</label>
+                            <label class="text-sm font-medium text-gray-700 whitespace-nowrap">筛选条件：</label>
                             <select id="stats-filter-select" class="w-full p-3 border rounded-lg themed-ring pr-10">
-                              <option value="all">鍏ㄩ儴璁板綍</option>
-                              <option value="max-amount">绀奸噾鏈€澶?/option>
-                              <option value="min-amount">绀奸噾鏈€灏?/option>
-                              <option value="has-remarks">鏈夊娉?/option>
-                              <option value="has-gifts">鏈夌ぜ鍝?/option>
-                              <option value="abolished">宸蹭綔搴?/option>
-                              <optgroup label="鎸夋敹娆炬柟寮忕瓫閫?>
-                                <option value="cash">绛涢€夈€岀幇閲戙€?/option>
-                                <option value="alipay">绛涢€夈€屾敮浠樺疂銆?/option>
-                                <option value="wechat">绛涢€夈€屽井淇°€?/option>
-                                <option value="other">绛涢€夈€屽叾浠栥€?/option>
+                              <option value="all">全部记录</option>
+                              <option value="max-amount">礼金最多</option>
+                              <option value="min-amount">礼金最少</option>
+                              <option value="has-remarks">有备注</option>
+                              <option value="has-gifts">有礼品</option>
+                              <option value="abolished">已作废</option>
+                              <optgroup label="按收款方式筛选">
+                                <option value="cash">筛选「现金」</option>
+                                <option value="alipay">筛选「支付宝」</option>
+                                <option value="wechat">筛选「微信」</option>
+                                <option value="other">筛选「其他」</option>
                               </optgroup>
                             </select>
                           </div>
-                          <!-- GridJS 琛ㄦ牸瀹瑰櫒 -->
+                          <!-- GridJS 表格容器 -->
                           <div id="grid-table-container"></div>
                         </div>
                         <div class="space-y-4">
                           <div class="flex justify-between p-3 bg-green-50  border-green-500 rounded-lg">
-                            <span class="font-bold text-green-800">鏈夋晥璁板綍浜烘暟:</span>
-                            <span class="font-bold text-green-600">${stats.totalGivers} 浜?/span>
+                            <span class="font-bold text-green-800">有效记录人数:</span>
+                            <span class="font-bold text-green-600">${stats.totalGivers} 人</span>
                           </div>
                           <div class="flex justify-between p-3 bg-green-50  border-green-500 rounded-lg">
-                            <span class="font-bold text-green-800">鏈夋晥鎬婚噾棰?</span>
+                            <span class="font-bold text-green-800">有效总金额:</span>
                             <span class="font-bold text-green-600">${Utils.formatCurrency(stats.totalAmount)}</span>
                           </div>
                           ${
                             stats.abolishedCount > 0
                               ? `
                             <div class="flex justify-between p-3 bg-red-50  border-red-500 rounded-lg">
-                              <span class="font-bold text-red-800">浣滃簾璁板綍:</span>
-                              <span class="font-bold text-red-600">${stats.abolishedCount} 浜?/span>
+                              <span class="font-bold text-red-800">作废记录:</span>
+                              <span class="font-bold text-red-600">${stats.abolishedCount} 人</span>
                             </div>
                             <div class="flex justify-between p-3 bg-red-50  border-red-500 rounded-lg">
-                              <span class="font-bold text-red-800">浣滃簾閲戦:</span>
+                              <span class="font-bold text-red-800">作废金额:</span>
                               <span class="font-bold text-red-600">${Utils.formatCurrency(stats.abolishedAmount)}</span>
                             </div>
                           `
                               : ""
                           }
                           <div class="border-t pt-4 mt-4">
-                            <h4 class="font-semibold mb-2">鎸夋敹娆炬柟寮忕粺璁★紙鏈夋晥璁板綍锛?</h4>
+                            <h4 class="font-semibold mb-2">按收款方式统计（有效记录）:</h4>
                             <ul class="space-y-2">${Object.entries(stats.byType)
                               .map(([type, amount]) => `<li class="flex justify-between"><span>${type}:</span> <span>${Utils.formatCurrency(amount)}</span></li>`)
                               .join("")}</ul>
@@ -2706,13 +2705,13 @@ export function bootGiftBookApp() {
                           <div class="border-t pt-4 mt-4">
                             <button id="export-excel-stats-btn" class="w-full themed-button-primary p-3 rounded-lg flex items-center justify-center gap-2">
                               <i class="ri-file-excel-line text-xl"></i>
-                              <span>瀵煎嚭 Excel</span>
+                              <span>导出 Excel</span>
                             </button>
                           </div>
                         </div>
                       </div>`;
 
-          app.ui.showModal("绀奸噾缁熻璇︽儏", statsHtml, [{ text: "鍏抽棴", class: "themed-button-secondary border px-4 py-2 rounded" }]);
+          app.ui.showModal("礼金统计详情", statsHtml, [{ text: "关闭", class: "themed-button-secondary border px-4 py-2 rounded" }]);
 
           setTimeout(() => {
             let currentFilteredGifts = [...app.gifts];
@@ -2721,20 +2720,20 @@ export function bootGiftBookApp() {
               const tableData = giftsToShow.map((g) => {
                 const guestLevel = g.data.guestLevel !== undefined ? g.data.guestLevel : 0;
                 const guestLevelName = CONFIG.GUEST_LEVELS[guestLevel] || CONFIG.GUEST_LEVELS[0];
-                const remarkTextForTable = app.formatRemarkDisplay(g.data.remarkData || {}, " / ") || "鏃?;
+                const remarkTextForTable = app.formatRemarkDisplay(g.data.remarkData || {}, " / ") || "无";
                 return [
                   g.data.name,
                   g.data.amount,
-                  remarkTextForTable, // 浣跨敤鏍煎紡鍖栨柟娉?
+                  remarkTextForTable, // 使用格式化方法
                   g.data.type,
                   new Date(g.data.timestamp).toLocaleString("zh-CN"),
-                  g.data.abolished ? "宸蹭綔搴? : "姝ｅ父",
+                  g.data.abolished ? "已作废" : "正常",
                 ];
               });
 
               const shouldPaginate = giftsToShow.length > CONFIG.PRINT_SPLIT_THRESHOLD;
               const gridConfig = {
-                columns: ["濮撳悕", "閲戦 (鍏?", "澶囨敞", "鏀舵绫诲瀷", "褰曞叆鏃堕棿", "鐘舵€?],
+                columns: ["姓名", "金额 (元)", "备注", "收款类型", "录入时间", "状态"],
                 data: tableData,
                 search: true,
                 sort: true,
@@ -2742,11 +2741,11 @@ export function bootGiftBookApp() {
                 width: "100%",
                 height: "62vh",
                 language: {
-                  search: { placeholder: "鎼滅储..." },
-                  pagination: { previous: "涓婁竴椤?, next: "涓嬩竴椤?, showing: "鏄剧ず", results: () => "鏉＄粨鏋?, to: "鍒?, of: "鍏? },
-                  loading: "鍔犺浇涓?..",
-                  noRecordsFound: "鏈壘鍒板尮閰嶇殑璁板綍",
-                  error: "鑾峰彇鏁版嵁鏃跺彂鐢熼敊璇?,
+                  search: { placeholder: "搜索..." },
+                  pagination: { previous: "上一页", next: "下一页", showing: "显示", results: () => "条结果", to: "到", of: "共" },
+                  loading: "加载中...",
+                  noRecordsFound: "未找到匹配的记录",
+                  error: "获取数据时发生错误",
                 },
                 style: {
                   th: { "background-color": "var(--primary-color)", color: "#fff" },
@@ -2815,16 +2814,16 @@ export function bootGiftBookApp() {
                   currentFilteredGifts = app.gifts.filter((g) => g.data.abolished === true);
                   break;
                 case "cash":
-                  currentFilteredGifts = app.gifts.filter((g) => g.data && g.data.type === "鐜伴噾");
+                  currentFilteredGifts = app.gifts.filter((g) => g.data && g.data.type === "现金");
                   break;
                 case "alipay":
-                  currentFilteredGifts = app.gifts.filter((g) => g.data && g.data.type === "鏀粯瀹?);
+                  currentFilteredGifts = app.gifts.filter((g) => g.data && g.data.type === "支付宝");
                   break;
                 case "wechat":
-                  currentFilteredGifts = app.gifts.filter((g) => g.data && g.data.type === "寰俊");
+                  currentFilteredGifts = app.gifts.filter((g) => g.data && g.data.type === "微信");
                   break;
                 case "other":
-                  currentFilteredGifts = app.gifts.filter((g) => g.data && g.data.type === "鍏朵粬");
+                  currentFilteredGifts = app.gifts.filter((g) => g.data && g.data.type === "其他");
                   break;
                 default:
                   currentFilteredGifts = [...app.gifts];
@@ -2843,9 +2842,9 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 鏋勫缓绀奸噾璁板綍鍘嗗彶鏃堕棿绾?HTML
-         * @param {Array} history - 鍙樻洿鍘嗗彶
-         * @param {Object} currentGift - 褰撳墠绀奸噾鏁版嵁
+         * 构建礼金记录历史时间线 HTML
+         * @param {Array} history - 变更历史
+         * @param {Object} currentGift - 当前礼金数据
          */
         generateTimelineHTML(history, currentGift) {
           const app = this.app;
@@ -2854,7 +2853,7 @@ export function bootGiftBookApp() {
                         <ul class="space-y-4 border-l-2 border-gray-300 ml-2">
                           <li class="relative pl-6 pb-4">
                             <div class="absolute w-3 h-3 bg-green-500 rounded-full -left-[7px] top-1 border-2 border-white"></div>
-                            <div class="text-sm text-gray-500">褰撳墠鐘舵€?(${new Date(currentGift.timestamp).toLocaleString("zh-CN")})</div>
+                            <div class="text-sm text-gray-500">当前状态 (${new Date(currentGift.timestamp).toLocaleString("zh-CN")})</div>
                           </li>
                           ${reversedHistory
                             .map(
@@ -2865,8 +2864,8 @@ export function bootGiftBookApp() {
                               <div class="font-medium text-gray-800 mt-1">${record.changeLog}</div>
                               ${
                                 index === reversedHistory.length - 1
-                                  ? `<button class="btn-view-original mt-2 text-xs bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-gray-700" data-history-index="0">鏌ョ湅鏈€鍘熷璁板綍</button>`
-                                  : `<button class="btn-view-snapshot mt-2 text-xs text-blue-500 hover:underline" data-history-index="${history.length - 1 - index}">鏌ョ湅姝ょ増鏈揩鐓?/button>`
+                                  ? `<button class="btn-view-original mt-2 text-xs bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-gray-700" data-history-index="0">查看最原始记录</button>`
+                                  : `<button class="btn-view-snapshot mt-2 text-xs text-blue-500 hover:underline" data-history-index="${history.length - 1 - index}">查看此版本快照</button>`
                               }
                             </li>
                           `
@@ -2878,7 +2877,7 @@ export function bootGiftBookApp() {
       }
 
       /**
-       * 鍓睆鏈嶅姟
+       * 副屏服务
        */
       class GuestScreenService {
         /**
@@ -2924,7 +2923,7 @@ export function bootGiftBookApp() {
           if (this.guestWindow) {
             setTimeout(() => {
               if (this.guestWindow?.document.documentElement.requestFullscreen) {
-                this.guestWindow.document.documentElement.requestFullscreen().catch(() => console.log("鏃犳硶鑷姩鍏ㄥ睆"));
+                this.guestWindow.document.documentElement.requestFullscreen().catch(() => console.log("无法自动全屏"));
               }
             }, 500);
           }
@@ -2957,7 +2956,7 @@ export function bootGiftBookApp() {
                 amountChinese: Utils.amountToChinese(g.data.amount),
               })),
               hidePrivacy: this.app.currentEvent.hidePrivacy || false,
-              typeText: this.app.currentEvent.theme === "theme-solemn" ? "绀奸噾" : "璐虹ぜ",
+              typeText: this.app.currentEvent.theme === "theme-solemn" ? "礼金" : "贺礼",
             },
             timestamp: Date.now(),
           };
@@ -2965,7 +2964,7 @@ export function bootGiftBookApp() {
           try {
             this.guestWindow.postMessage(message, "*");
           } catch (error) {
-            console.error("鍙戦€佹秷鎭埌鍓睆澶辫触:", error);
+            console.error("发送消息到副屏失败:", error);
             this.isConnected = false;
           }
         }
@@ -3018,8 +3017,8 @@ export function bootGiftBookApp() {
       }
 
       /**
-       * GiftBookApp 搴旂敤鏍稿績
-       * - 绠＄悊鐢熷懡鍛ㄦ湡銆佷簨浠剁粦瀹氫笌鏁版嵁娴佽浆
+       * GiftBookApp 应用核心
+       * - 管理生命周期、事件绑定与数据流转
        */
       class GiftBookApp {
         /**
@@ -3049,17 +3048,17 @@ export function bootGiftBookApp() {
           this.isGeneratingPdf = false;
           this.allGiftsDecrypted = false;
           this.REMARK_LABELS = [
-            { key: "custom", label: "澶囨敞" },
-            { key: "gift", label: "绀煎搧" },
-            { key: "relation", label: "鍏崇郴" },
-            { key: "phone", label: "鐢佃瘽" },
-            { key: "address", label: "浣忓潃" },
+            { key: "custom", label: "备注" },
+            { key: "gift", label: "礼品" },
+            { key: "relation", label: "关系" },
+            { key: "phone", label: "电话" },
+            { key: "address", label: "住址" },
           ];
         }
 
         /**
-         * 搴旂敤鍒濆鍖栧叆鍙?
-         * 鍒濆鍖栨暟鎹簱銆佺粦瀹氫簨浠跺苟灏濊瘯鎭㈠涓婃浼氳瘽
+         * 应用初始化入口
+         * 初始化数据库、绑定事件并尝试恢复上次会话
          */
         async init() {
           try {
@@ -3068,13 +3067,13 @@ export function bootGiftBookApp() {
             this.bindEvents();
             await this.tryRestoreSession();
           } catch (error) {
-            console.error("搴旂敤鍒濆鍖栧け璐?", error);
-            this.ui.showNotification("绯荤粺鍒濆鍖栧け璐ワ紝璇峰埛鏂板悗閲嶈瘯銆?, "error");
+            console.error("应用初始化失败:", error);
+            this.ui.showNotification("系统初始化失败，请刷新后重试。", "error");
           }
         }
 
         /**
-         * 璁剧疆鍒濆 UI 鐘舵€侊紝渚嬪榛樿鏃堕棿涓庤闊冲垪琛?
+         * 设置初始 UI 状态，例如默认时间与语音列表
          */
         setupInitialUI() {
           const { date, time } = Utils.getCurrentDateTime();
@@ -3086,7 +3085,7 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 灏濊瘯鎭㈠浼氳瘽锛屽鏋滄垚鍔熷垯鐩存帴杩涘叆涓荤晫闈?
+         * 尝试恢复会话，如果成功则直接进入主界面
          */
         async tryRestoreSession() {
           const savedSession = this.session.load();
@@ -3107,7 +3106,7 @@ export function bootGiftBookApp() {
               await this.startSession();
             }
           } catch (error) {
-            console.error("浼氳瘽鎭㈠澶辫触", error);
+            console.error("会话恢复失败", error);
             this.session.clear();
             await this.loadEvents();
             this.ui.showScreen("setup");
@@ -3115,11 +3114,11 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 鍔犺浇鎵€鏈変簨椤瑰埌閫夋嫨鍒楄〃
+         * 加载所有事项到选择列表
          */
         async loadEvents() {
           const events = await this.giftRepository.fetchAllEvents();
-          this.ui.elements.eventSelector.innerHTML = '<option value="">璇烽€夋嫨涓€涓簨椤?/option>';
+          this.ui.elements.eventSelector.innerHTML = '<option value="">请选择一个事项</option>';
 
           if (events.length > 0) {
             this.ui.elements.selectEventSection.classList.remove("hidden");
@@ -3140,7 +3139,7 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 鍚姩浜嬮」浼氳瘽锛屽簲鐢ㄤ富棰樸€佸姞杞界ぜ閲戞暟鎹苟灞曠ず涓荤晫闈?
+         * 启动事项会话，应用主题、加载礼金数据并展示主界面
          */
         async startSession() {
           this.ui.elements.currentEventTitleEl.textContent = this.currentEvent.name;
@@ -3156,20 +3155,20 @@ export function bootGiftBookApp() {
           try {
             this.session.save(this.currentEvent, this.currentPassword);
           } catch (error) {
-            console.error("浼氳瘽瀛樺偍澶辫触", error);
+            console.error("会话存储失败", error);
           }
 
-          // 妫€鏌ヤ簨椤规槸鍚︾粨鏉燂紝鎻愰啋鐢ㄦ埛瀵煎嚭鏁版嵁
+          // 检查事项是否结束，提醒用户导出数据
           const endTime = new Date(this.currentEvent.endDateTime);
           const now = new Date();
 
           if (now > endTime && !this.session.hasNotification(this.currentEvent.id)) {
-            const title = "璇峰強鏃跺鍑烘暟鎹?;
-            const message = `褰撳墠浜嬮」宸茬粨鏉燂紝涓虹‘淇濇暟鎹畨鍏紝寮虹儓寤鸿鎮ㄥ敖蹇€氳繃銆?strong>瀵煎嚭涓?Excel</strong>銆戞垨銆?strong>鎵撳嵃/鍙﹀瓨涓篜DF</strong>銆戝姛鑳斤紝灏嗙ぜ閲戞暟鎹畬鏁村浠借嚦鎮ㄧ殑鐢佃剳鎴栬€呭井淇°€?br>
-                             <span class="text-sm text-gray-600">鍘熷洜锛氭椂闂撮暱浜嗭紝瀛樺偍绌洪棿鍙兘浼氬洜娴忚鍣ㄦ竻鐞嗐€佺紦瀛樻竻闄ょ瓑鎿嶄綔琚噸缃紝瀵艰嚧鏁版嵁鎰忓涓㈠け銆?/span>`;
+            const title = "请及时导出数据";
+            const message = `当前事项已结束，为确保数据安全，强烈建议您尽快通过【<strong>导出为 Excel</strong>】或【<strong>打印/另存为PDF</strong>】功能，将礼金数据完整备份至您的电脑或者微信。<br>
+                             <span class="text-sm text-gray-600">原因：时间长了，存储空间可能会因浏览器清理、缓存清除等操作被重置，导致数据意外丢失。</span>`;
 
             setTimeout(() => {
-              this.ui.showModal(title, message, [{ text: "鎴戝凡鐭ユ檽", class: "themed-button-primary px-4 py-2 rounded", role: "secondary" }]);
+              this.ui.showModal(title, message, [{ text: "我已知晓", class: "themed-button-primary px-4 py-2 rounded", role: "secondary" }]);
               this.session.markNotification(this.currentEvent.id);
             }, 500);
           }
@@ -3178,70 +3177,70 @@ export function bootGiftBookApp() {
           this.ui.showScreen("main");
         }
         /**
-         * 鏄剧ず鑱旂郴涓庢敮鎸佷綔鑰呭脊绐?
+         * 显示联系与支持作者弹窗
          */
         showAuthorSupportModal() {
-          // 瀹氫箟鏍峰紡甯搁噺
+          // 定义样式常量
           const containerClass = "flex flex-col md:flex-row gap-1 justify-center items-center py-4 px-2";
           const cardClass = "text-center flex-1 w-full flex flex-col items-center";
           const imgBoxClass = "w-48 h-48 bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center overflow-hidden mb-3 relative group transition-all hover:border-solid";
           const imgClass = "w-full h-full object-contain p-1";
-          const wechatQrSrc = "/addme.jpg";
-          const payQrSrc = "/support.jpg";
+          const wechatQrSrc = "./static/addme.jpg";
+          const payQrSrc = "./static/support.jpg";
 
           const html = `
           <div class="${containerClass}">
             
             <div class="${cardClass}">
-              <h4 class="font-bold text-lg text-gray-800 mb-1">鑱旂郴浣滆€?/h4>
-              <p class="text-md text-gray-500 mb-4">鍙嶉銆佸姛鑳藉缓璁?路 浜ゆ祦</p>
+              <h4 class="font-bold text-lg text-gray-800 mb-1">联系作者</h4>
+              <p class="text-md text-gray-500 mb-4">反馈、功能建议 · 交流</p>
               <div class="${imgBoxClass} hover:border-blue-400">
-                <img src="${wechatQrSrc}" alt="寰俊浜岀淮鐮? class="${imgClass}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                <img src="${wechatQrSrc}" alt="微信二维码" class="${imgClass}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
                 <div class="absolute inset-0 hidden items-center justify-center text-gray-400 bg-gray-50 text-sm">
-                  姝ゅ鏀惧井淇′簩缁寸爜<br>(璇锋浛鎹㈠浘鐗囪矾寰?
+                  此处放微信二维码<br>(请替换图片路径)
                 </div>
               </div>
-              <p class="text-sm font-medium text-gray-700 bg-gray-100 px-3 py-1 rounded-full mt-1">寰俊浜ゆ祦</p>
+              <p class="text-sm font-medium text-gray-700 bg-gray-100 px-3 py-1 rounded-full mt-1">微信交流</p>
             </div>
 
             <div class="w-full h-px md:w-px md:h-64 bg-gray-200"></div>
 
             <div class="${cardClass}">
-              <h4 class="font-bold text-lg text-gray-800 mb-1">鎵撹祻鏀寔</h4>
-              <p class="text-md text-gray-500 mb-4">寮€婧愪笉鏄擄紝璇蜂綔鑰呭枬鏉挅鍟?/p>
+              <h4 class="font-bold text-lg text-gray-800 mb-1">打赏支持</h4>
+              <p class="text-md text-gray-500 mb-4">开源不易，请作者喝杯咖啡</p>
 
               <div class="${imgBoxClass} hover:border-red-400">
-                <img src="${payQrSrc}" alt="鏀舵鐮? class="${imgClass}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                <img src="${payQrSrc}" alt="收款码" class="${imgClass}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
                 <div class="absolute inset-0 hidden items-center justify-center text-gray-400 bg-gray-50 text-sm">
-                  姝ゅ鏀炬敹娆剧爜<br>(璇锋浛鎹㈠浘鐗囪矾寰?
+                  此处放收款码<br>(请替换图片路径)
                 </div>
               </div>
-              <p class="text-sm font-medium text-red-600 bg-red-50 px-3 py-1 rounded-full mt-1">鎰熻阿鎮ㄧ殑榧撳姳涓庢敮鎸?鉂わ笍</p>
+              <p class="text-sm font-medium text-red-600 bg-red-50 px-3 py-1 rounded-full mt-1">感谢您的鼓励与支持 ❤️</p>
             </div>
 
           </div>
           
           <div class="text-center mt-2 p-3 bg-yellow-50 rounded-lg text-xs text-yellow-700 border border-yellow-200">
             <i class="ri-information-line align-middle mr-1"></i>
-            鏈▼搴忎负寮€婧愬厤璐圭▼搴忥紝濡傛灉鎮ㄨ寰楄繖涓郴缁熷鎮ㄦ湁甯姪锛屾杩庤仈绯讳綔鑰呮彁寤鸿銆?
+            本程序为开源免费程序，如果您觉得这个系统对您有帮助，欢迎联系作者提建议。
           </div>
         `;
-          this.ui.showModal("鑱旂郴寮€鍙戣€?, html, [{ text: "鍏抽棴", class: "themed-button-secondary border px-6 py-2 rounded-lg" }]);
+          this.ui.showModal("联系开发者", html, [{ text: "关闭", class: "themed-button-secondary border px-6 py-2 rounded-lg" }]);
         }
         /**
-         * 缁戝畾椤甸潰浜や簰浜嬩欢锛岃礋璐ｈ〃鍗曘€佸揩鎹烽敭涓庤緟鍔╁姛鑳?
+         * 绑定页面交互事件，负责表单、快捷键与辅助功能
          */
         bindEvents() {
-          // 琛ㄥ崟鎻愪氦浜嬩欢
+          // 表单提交事件
           this.ui.elements.createEventForm.addEventListener("submit", (e) => this.handleCreateEvent(e));
           this.ui.elements.addGiftForm.addEventListener("submit", (e) => this.handleAddGift(e));
           this.ui.elements.unlockEventBtn.addEventListener("click", () => {
             const eventId = parseInt(this.ui.elements.eventSelector.value, 10);
             if (eventId) this.handleUnlockEvent(eventId);
-            else this.ui.showNotification("璇峰厛閫夋嫨涓€涓簨椤广€?);
+            else this.ui.showNotification("请先选择一个事项。");
           });
 
-          // 娣诲姞澶囨敞棰勮鎸夐挳鐨勪簨浠剁洃鍚?
+          // 添加备注预设按钮的事件监听
           const presetButtons = document.querySelectorAll(".remark-preset-btn");
           presetButtons.forEach((btn) => {
             btn.addEventListener("click", (e) => {
@@ -3250,23 +3249,23 @@ export function bootGiftBookApp() {
               this.toggleRemarkPreset(preset, btn);
             });
           });
-          // 鍒嗛〉鎸夐挳
+          // 分页按钮
           this.ui.elements.prevPageBtn.addEventListener("click", () => this.giftManager.changePage(-1));
           this.ui.elements.nextPageBtn.addEventListener("click", () => this.giftManager.changePage(1));
 
-          // 鍔熻兘鎸夐挳
+          // 功能按钮
           this.ui.elements.printBtn.addEventListener("click", () => this.exportService.prepareForPrint());
           this.ui.elements.exportExcelBtn.addEventListener("click", () => this.exportService.exportToExcel());
           this.ui.elements.statsBtn.addEventListener("click", () => this.statsService.showStatistics());
           this.ui.elements.searchIcon.addEventListener("click", () => this.handleSearch());
           this.ui.elements.searchNameInput.addEventListener("keyup", (e) => e.key === "Enter" && this.handleSearch());
 
-          // 璇煶寮€鍏?
+          // 语音开关
           this.ui.elements.speechToggle.addEventListener("change", (e) => {
             this.isSpeechEnabled = e.target.checked;
           });
 
-          // 绀肩翱鐐瑰嚮浜嬩欢
+          // 礼簿点击事件
           this.ui.elements.giftBookContent.addEventListener("click", (e) => {
             const cell = e.target.closest("[data-gift-index]");
             if (!cell) return;
@@ -3281,18 +3280,18 @@ export function bootGiftBookApp() {
             }
           });
 
-          // 浜嬮」涓嬫媺鑿滃崟
+          // 事项下拉菜单
           this.ui.elements.eventSwitcherTrigger.addEventListener("click", (e) => {
             e.stopPropagation();
             const dropdown = this.ui.elements.eventDropdown;
             const isHidden = dropdown.classList.contains("hidden");
             if (isHidden) {
               dropdown.innerHTML = `
-                            <a href="#" class="block px-4 py-2 text-sm themed-text font-semibold themed-link-hover" data-action="switch">鍒囨崲/鍒涘缓浜嬮」</a>
-                            <a href="#" class="block px-4 py-2 text-sm themed-text font-semibold themed-link-hover" data-action="backup">澶囦唤/鎭㈠鏁版嵁</a>
-                            <a href="#" class="block px-4 py-2 text-sm themed-text font-semibold themed-link-hover" data-action="guest-screen">杩涘叆鍓睆</a>
-                            <a href="#" class="block px-4 py-2 text-sm themed-text font-semibold themed-link-hover" data-action="edit">璁剧疆姝や簨椤?/a>
-                            <a href="#" class="block px-4 py-2 text-sm themed-text font-semibold themed-link-hover" data-action="delete">鍒犻櫎姝や簨椤?/a>`;
+                            <a href="#" class="block px-4 py-2 text-sm themed-text font-semibold themed-link-hover" data-action="switch">切换/创建事项</a>
+                            <a href="#" class="block px-4 py-2 text-sm themed-text font-semibold themed-link-hover" data-action="backup">备份/恢复数据</a>
+                            <a href="#" class="block px-4 py-2 text-sm themed-text font-semibold themed-link-hover" data-action="guest-screen">进入副屏</a>
+                            <a href="#" class="block px-4 py-2 text-sm themed-text font-semibold themed-link-hover" data-action="edit">设置此事项</a>
+                            <a href="#" class="block px-4 py-2 text-sm themed-text font-semibold themed-link-hover" data-action="delete">删除此事项</a>`;
             }
             dropdown.classList.toggle("hidden");
           });
@@ -3322,7 +3321,7 @@ export function bootGiftBookApp() {
             }
           });
 
-          // 璺抽〉鍔熻兘
+          // 跳页功能
           this.ui.elements.pageInfoEl.addEventListener("focusout", (e) => {
             if (e.target && e.target.id === "current-page-input") {
               this.handlePageInputChange(e);
@@ -3337,7 +3336,7 @@ export function bootGiftBookApp() {
             }
           });
 
-          // 鍏ㄥ睆鎸夐挳
+          // 全屏按钮
           this.ui.elements.fullscreenBtn.addEventListener("click", () => {
             if (!document.fullscreenElement) {
               document.documentElement.requestFullscreen();
@@ -3357,15 +3356,15 @@ export function bootGiftBookApp() {
             }
           });
 
-          // 璇煶棰勮
+          // 语音预览
           this.ui.elements.previewCreateVoiceBtn.addEventListener("click", () => {
             this.previewSelectedVoice(this.ui.elements.eventVoiceSelect);
           });
 
-          // 鐐瑰嚮绌虹櫧鍏抽棴涓嬫媺鑿滃崟
+          // 点击空白关闭下拉菜单
           window.addEventListener("click", () => this.ui.elements.eventDropdown.classList.add("hidden"));
 
-          // 閿洏蹇嵎閿?
+          // 键盘快捷键
           document.addEventListener("keydown", (e) => {
             if (e.ctrlKey && e.key.toLowerCase() === "p") {
               e.preventDefault();
@@ -3380,13 +3379,13 @@ export function bootGiftBookApp() {
             if (isModalVisible) {
               if (e.key === "Escape") {
                 e.preventDefault();
-                // 浼樺厛瑙﹀彂 secondary锛堥€氬父涓哄彇娑堬級
+                // 优先触发 secondary（通常为取消）
                 this.ui.elements.modalActions.querySelector('button[data-role="secondary"]')?.click();
                 return;
               }
               if (e.key === "Enter" && activeElement.tagName !== "TEXTAREA" && !activeElement.classList.contains("gridjs-input")) {
                 e.preventDefault();
-                // 濮嬬粓瑙﹀彂 primary锛堢‘璁わ級鎸夐挳锛岄伩鍏嶈瑙﹀彇娑?
+                // 始终触发 primary（确认）按钮，避免误触取消
                 const primaryBtn = this.ui.elements.modalActions.querySelector('button[data-role="primary"]') || this.ui.elements.modalActions.querySelector("button:last-child");
                 primaryBtn?.click();
                 return;
@@ -3394,11 +3393,11 @@ export function bootGiftBookApp() {
               return;
             }
 
-            // 鍦ㄤ富鐣岄潰涓斾笉鍦ㄨ緭鍏ユ涓椂锛屾敮鎸佹柟鍚戦敭缈婚〉
+            // 在主界面且不在输入框中时，支持方向键翻页
             if (isMainScreenVisible && activeElement.tagName !== "INPUT" && activeElement.tagName !== "TEXTAREA") {
               if (e.key === "ArrowLeft") {
                 e.preventDefault();
-                // 宸︾澶?= 涓婁竴椤?
+                // 左箭头 = 上一页
                 if (!this.ui.elements.prevPageBtn.disabled) {
                   this.giftManager.changePage(-1);
                 }
@@ -3406,7 +3405,7 @@ export function bootGiftBookApp() {
               }
               if (e.key === "ArrowRight") {
                 e.preventDefault();
-                // 鍙崇澶?= 涓嬩竴椤?
+                // 右箭头 = 下一页
                 if (!this.ui.elements.nextPageBtn.disabled) {
                   this.giftManager.changePage(1);
                 }
@@ -3443,20 +3442,20 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 鏍规嵁浜嬮」 ID 鏍￠獙绠＄悊鍛樺瘑鐮佸苟杩涘叆浼氳瘽
+         * 根据事项 ID 校验管理员密码并进入会话
          */
         async handleUnlockEvent(eventId) {
           const event = await this.giftRepository.fetchEvent(eventId);
           if (!event) {
-            this.ui.showNotification("鏈壘鍒拌浜嬮」銆?, "error");
+            this.ui.showNotification("未找到该事项。", "error");
             return;
           }
 
-          // 浣跨敤缁熶竴鐨勫瘑鐮佹牎楠屾柟娉?
-          const password = await this.requestAdminPassword("杈撳叆绠＄悊瀵嗙爜", null, event.passwordHash, true);
+          // 使用统一的密码校验方法
+          const password = await this.requestAdminPassword("输入管理密码", null, event.passwordHash, true);
 
           if (password === null) {
-            // 鐢ㄦ埛鍙栨秷
+            // 用户取消
             return;
           }
 
@@ -3468,7 +3467,7 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 杩斿洖鍒涘缓/閫夋嫨浜嬮」鐣岄潰骞舵竻闄ゅ綋鍓嶄細璇?
+         * 返回创建/选择事项界面并清除当前会话
          */
         showSetupScreen() {
           const previousEventId = this.currentEvent?.id;
@@ -3479,14 +3478,14 @@ export function bootGiftBookApp() {
           if (previousEventId) {
             this.passwordCache.clear(previousEventId);
           }
-          // 鎭㈠鍒涘缓琛ㄥ崟鐨勫紑濮?缁撴潫榛樿鏃堕棿
+          // 恢复创建表单的开始/结束默认时间
           this.setupInitialUI();
           this.ui.showScreen("setup");
           this.loadEvents();
         }
 
         /**
-         * 鍒涘缓鏂颁簨椤癸紝鍖呭惈琛ㄥ崟鏍￠獙涓庡皝闈€佹墦鍗伴厤缃鐞?
+         * 创建新事项，包含表单校验与封面、打印配置处理
          */
         async handleCreateEvent(e) {
           e.preventDefault();
@@ -3500,36 +3499,36 @@ export function bootGiftBookApp() {
           const pdfEngine = "browser";
 
           if (!name || !password || !startDateTime || !endDateTime) {
-            this.ui.showNotification("璇峰～鍐欐墍鏈夊繀濉」銆?, "error");
+            this.ui.showNotification("请填写所有必填项。", "error");
             return;
           }
 
           if (new Date(startDateTime) >= new Date(endDateTime)) {
-            this.ui.showNotification("寮€濮嬫椂闂村繀椤绘棭浜庣粨鏉熸椂闂淬€?, "error");
+            this.ui.showNotification("开始时间必须早于结束时间。", "error");
             return;
           }
 
           let coverType = "default";
-          // 寮圭獥浜屾楠岃瘉鍒氳緭鍏ョ殑绠＄悊瀵嗙爜锛岄槻姝㈣閿?
+          // 弹窗二次验证刚输入的管理密码，防止记错
           const verifyContent = `
                         <div class="text-left">
-                          <p class="mb-2">涓虹‘淇濈鐞嗗瘑鐮佽緭鍏ユ棤璇紝璇峰啀娆¤緭鍏ヤ互纭锛?/p>
-                          <input type="password" id="verify-create-pwd" class="w-full p-2 border rounded themed-ring" placeholder="鍐嶆杈撳叆绠＄悊瀵嗙爜">
-                          <p class="text-xs text-gray-500 mt-2">鎻愮ず锛氫袱娆″瘑鐮侀渶瀹屽叏涓€鑷达紝鎵嶅彲浠ュ垱寤轰簨椤广€?/p>
+                          <p class="mb-2">为确保管理密码输入无误，请再次输入以确认：</p>
+                          <input type="password" id="verify-create-pwd" class="w-full p-2 border rounded themed-ring" placeholder="再次输入管理密码">
+                          <p class="text-xs text-gray-500 mt-2">提示：两次密码需完全一致，才可以创建事项。</p>
                         </div>
                       `;
 
-          this.ui.showModal("纭绠＄悊瀵嗙爜", verifyContent, [
-            { text: "鍙栨秷", class: "themed-button-secondary border px-4 py-2 rounded", role: "secondary" },
+          this.ui.showModal("确认管理密码", verifyContent, [
+            { text: "取消", class: "themed-button-secondary border px-4 py-2 rounded", role: "secondary" },
             {
-              text: "纭鍒涘缓",
+              text: "确认创建",
               class: "themed-button-primary px-4 py-2 rounded",
               role: "primary",
               keepOpen: true,
               handler: async () => {
                 const verifyPwd = document.getElementById("verify-create-pwd").value;
                 if (verifyPwd !== password) {
-                  this.ui.showNotification("涓ゆ杈撳叆鐨勭鐞嗗瘑鐮佷笉涓€鑷达紝璇烽噸鏂扮‘璁?, "error");
+                  this.ui.showNotification("两次输入的管理密码不一致，请重新确认", "error");
                   return;
                 }
 
@@ -3558,9 +3557,9 @@ export function bootGiftBookApp() {
                   this.ui.elements.createEventForm.reset();
                   this.ui.closeModal();
                   await this.startSession();
-                  this.ui.showNotification("浜嬮」鍒涘缓鎴愬姛銆?, "success");
+                  this.ui.showNotification("事项创建成功。", "success");
                 } catch (error) {
-                  this.ui.showNotification("鍒涘缓浜嬮」澶辫触锛岃閲嶈瘯銆?, "error");
+                  this.ui.showNotification("创建事项失败，请重试。", "error");
                 }
               },
             },
@@ -3570,8 +3569,8 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 澶勭悊绀奸噾褰曞叆琛ㄥ崟鎻愪氦
-         * 楠岃瘉杈撳叆骞舵鏌ラ噸澶嶄俊鎭悗缁欏嚭纭鎻愮ず
+         * 处理礼金录入表单提交
+         * 验证输入并检查重复信息后给出确认提示
          */
         async handleAddGift(e) {
           e.preventDefault();
@@ -3579,116 +3578,116 @@ export function bootGiftBookApp() {
           const amountStr = this.ui.elements.giftAmountInput.value;
           const type = document.querySelector('input[name="payment-type"]:checked')?.value;
           const remarkData = this.collectRemarkData();
-          // 楠岃瘉蹇呭～瀛楁
+          // 验证必填字段
           if (!name || !amountStr || !type) {
-            this.ui.showNotification("淇℃伅涓嶅畬鏁达紝璇峰～鍐欏鍚嶃€侀噾棰濆苟閫夋嫨鏀舵绫诲瀷銆?, "error");
+            this.ui.showNotification("信息不完整，请填写姓名、金额并选择收款类型。", "error");
             return;
           }
 
-          // 楠岃瘉閲戦鏈夋晥鎬?
+          // 验证金额有效性
           const amount = parseFloat(amountStr);
           if (isNaN(amount) || amount < 0) {
-            this.ui.showNotification("閲戦鏃犳晥锛岃杈撳叆闈炶礋閲戦銆?, "error");
+            this.ui.showNotification("金额无效，请输入非负金额。", "error");
             return;
           }
 
-          if (type === "鍏朵粬" && (!remarkData.custom || remarkData.custom.trim() === "")) {
-            this.ui.showNotification("褰撴敹娆剧被鍨嬩负鈥滃叾浠栤€濇椂锛岃鍦ㄥ娉ㄤ腑璇存槑鍏蜂綋鎯呭喌銆?, "error");
-            return; // 闃绘鎻愪氦
+          if (type === "其他" && (!remarkData.custom || remarkData.custom.trim() === "")) {
+            this.ui.showNotification("当收款类型为“其他”时，请在备注中说明具体情况。", "error");
+            return; // 阻止提交
           }
-          // 妫€鏌ラ噸澶嶈褰曪細鍚屽悕鎴栧悓鍚嶅悓閲戦
+          // 检查重复记录：同名或同名同金额
           const sameNameGifts = this.gifts.filter((g) => g.data?.name === name);
           const exactMatchExists = sameNameGifts.some((g) => g.data?.amount === amount);
 
-          // 鏄剧ず纭瀵硅瘽妗嗭紙鏍规嵁閲嶅鎯呭喌鏄剧ず涓嶅悓鐨勮鍛婄骇鍒級
+          // 显示确认对话框（根据重复情况显示不同的警告级别）
           this.showGiftConfirmationModal(name, amount, remarkData, type, sameNameGifts.length > 0, exactMatchExists);
         }
 
         /**
-         * 绀奸噾褰曞叆纭寮圭獥
-         * 鏍规嵁閲嶅鎯呭喌灞曠ず鎻愮ず骞跺厑璁歌ˉ鍏呭娉?
+         * 礼金录入确认弹窗
+         * 根据重复情况展示提示并允许补充备注
          */
         showGiftConfirmationModal(name, amount, remarkData, type, nameExists, exactMatchExists) {
           let modalTitle, modalContent;
           this.ui.elements.giftAmountInput.blur();
           const remarkDisplay = this.formatRemarkDisplay(remarkData);
 
-          // 鐢熸垚澶囨敞杈撳叆妗咹TML锛堜娇鐢ㄩ€氱敤鏂规硶锛?
+          // 生成备注输入框HTML（使用通用方法）
           const remarkInputsHTML = `
-                          <label class="block text-sm font-medium text-gray-700">濡傞潪閲嶅锛屽缓璁～鍐欏娉?閫夊～)</label>
+                          <label class="block text-sm font-medium text-gray-700">如非重复，建议填写备注(选填)</label>
                           <div class="space-y-2">
                             ${this.generateRemarkInputsHTML(remarkData)}
                           </div>
                       `;
 
           if (exactMatchExists) {
-            modalTitle = "閲嶅淇℃伅纭";
+            modalTitle = "重复信息确认";
             modalContent = `
                           <div class="space-y-3 text-left">
                             <div class="p-3 bg-red-100 border-red-500 text-red-800 rounded-md">
-                              <strong class="font-bold">璀﹀憡锛?/strong>
-                              <p class="text-sm">绯荤粺涓凡瀛樺湪鈥滅浉鍚屽鍚嶁€濅笖鈥滅浉鍚岄噾棰濃€濈殑璁板綍锛屼负閬垮厤閲嶅褰曞叆锛岃浠旂粏鏍稿銆?/p>
+                              <strong class="font-bold">警告：</strong>
+                              <p class="text-sm">系统中已存在“相同姓名”且“相同金额”的记录，为避免重复录入，请仔细核对。</p>
                             </div>
-                            <p><strong>鏉ュ濮撳悕:</strong> <span class="text-lg">${name}</span></p>
-                            <p><strong>閲戦:</strong> <span class="font-bold text-xl themed-text">${Utils.formatCurrency(amount)}</span></p>
+                            <p><strong>来宾姓名:</strong> <span class="text-lg">${name}</span></p>
+                            <p><strong>金额:</strong> <span class="font-bold text-xl themed-text">${Utils.formatCurrency(amount)}</span></p>
                             ${remarkInputsHTML}
                           </div>`;
           } else if (nameExists) {
-            modalTitle = "鍚屽悕淇℃伅纭";
+            modalTitle = "同名信息确认";
             modalContent = `
                           <div class="space-y-3 text-left">
                             <div class="p-2 bg-yellow-100 text-yellow-800 rounded-md text-sm">
-                              <strong>娉ㄦ剰锛?/strong>绯荤粺涓凡瀛樺湪鍚嶄负 <strong>${name}</strong> 鐨勮褰曘€備负閬垮厤娣锋穯锛屽缓璁偍娣诲姞澶囨敞銆?
+                              <strong>注意：</strong>系统中已存在名为 <strong>${name}</strong> 的记录。为避免混淆，建议您添加备注。
                             </div>
-                            <p><strong>鏉ュ濮撳悕:</strong> <span class="text-lg">${name}</span></p>
-                            <p><strong>閲戦:</strong> <span class="font-bold text-xl themed-text">${Utils.formatCurrency(amount)}</span></p>
+                            <p><strong>来宾姓名:</strong> <span class="text-lg">${name}</span></p>
+                            <p><strong>金额:</strong> <span class="font-bold text-xl themed-text">${Utils.formatCurrency(amount)}</span></p>
                             ${remarkInputsHTML}
                           </div>`;
           } else {
-            modalTitle = "璇风‘璁ゅ綍鍏ヤ俊鎭?;
+            modalTitle = "请确认录入信息";
             modalContent = `
                           <div class="space-y-3 text-left">
-                            <p><strong>鏉ュ濮撳悕:</strong> <span class="text-lg">${name}</span></p>
-                            <p><strong>鏁板瓧閲戦:</strong> <span class="font-bold text-xl themed-text">${Utils.formatCurrency(amount)}</span></p>
-                            <p><strong>澶у啓閲戦:</strong> <span class="font-bold text-xl themed-text">${Utils.amountToChinese(amount)}</span></p>
-                            ${remarkDisplay ? `<p><strong>澶囨敞:</strong> ${remarkDisplay}</p>` : ""}
+                            <p><strong>来宾姓名:</strong> <span class="text-lg">${name}</span></p>
+                            <p><strong>数字金额:</strong> <span class="font-bold text-xl themed-text">${Utils.formatCurrency(amount)}</span></p>
+                            <p><strong>大写金额:</strong> <span class="font-bold text-xl themed-text">${Utils.amountToChinese(amount)}</span></p>
+                            ${remarkDisplay ? `<p><strong>备注:</strong> ${remarkDisplay}</p>` : ""}
                           </div>`;
           }
 
           const confirmationHandler = () => {
-            // 鍦ㄥ悓鍚嶆垨閲嶅纭鐨勬儏鍐典笅锛屾敹闆嗘洿鏂板悗鐨勫娉ㄦ暟鎹?
+            // 在同名或重复确认的情况下，收集更新后的备注数据
             const finalRemarkData = nameExists || exactMatchExists ? this.collectRemarkData(true) : remarkData;
             this.saveGift({ name, amount, type, remarkData: finalRemarkData });
           };
 
           this.ui.showModal(modalTitle, modalContent, [
-            { text: "杩斿洖淇敼", class: "themed-button-secondary border px-4 py-2 rounded" },
-            { text: "纭鎻愪氦", class: "themed-button-primary px-4 py-2 rounded", handler: confirmationHandler, keepOpen: true },
+            { text: "返回修改", class: "themed-button-secondary border px-4 py-2 rounded" },
+            { text: "确认提交", class: "themed-button-primary px-4 py-2 rounded", handler: confirmationHandler, keepOpen: true },
           ]);
         }
 
         /**
-         * 鎵撳紑鍓睆绐楀彛
+         * 打开副屏窗口
          */
         openGuestScreen() {
           if (!this.currentEvent) {
-            this.ui.showNotification("璇峰厛杩涘叆涓€涓簨椤广€?, "error");
+            this.ui.showNotification("请先进入一个事项。", "error");
             return;
           }
 
           this.guestScreenService.open();
-          this.ui.showNotification("鍓睆宸叉墦寮€锛屽鏈嚜鍔ㄥ叏灞忚鎸?F11銆?, "info");
+          this.ui.showNotification("副屏已打开，如未自动全屏请按 F11。", "info");
         }
 
         /**
-         * 淇濆瓨绀奸噾璁板綍
-         * @param {Object} giftData - 绀奸噾鏁版嵁
+         * 保存礼金记录
+         * @param {Object} giftData - 礼金数据
          */
         async saveGift(giftData) {
           const isOutOfTime = new Date() < new Date(this.currentEvent.startDateTime) || new Date() > new Date(this.currentEvent.endDateTime);
 
           if (isOutOfTime) {
-            const password = await this.requestAdminPassword("绀奸噾琛ュ綍", "褰撳墠宸茶秴鍑烘湁鏁堝綍鍏ユ椂闂?璇疯緭鍏ョ鐞嗗瘑鐮佽繘琛岃ˉ褰曘€?, null, false);
+            const password = await this.requestAdminPassword("礼金补录", "当前已超出有效录入时间,请输入管理密码进行补录。", null, false);
             if (password === null) {
               this.ui.closeModal();
               return;
@@ -3696,10 +3695,10 @@ export function bootGiftBookApp() {
           }
 
           try {
-            // 榛樿绛夌骇涓?0锛堥泤瀹撅級
+            // 默认等级为 0（雅宾）
             const guestLevel = giftData.guestLevel !== undefined ? giftData.guestLevel : 0;
 
-            // timestamp 鏀惧叆 encryptedData锛岀敤浜庢樉绀哄垱寤?淇敼鏃堕棿
+            // timestamp 放入 encryptedData，用于显示创建/修改时间
             const fullGiftData = {
               ...giftData,
               timestamp: new Date().toISOString(),
@@ -3707,15 +3706,15 @@ export function bootGiftBookApp() {
             };
             const encryptedData = CryptoService.encrypt(fullGiftData, this.currentPassword);
 
-            // levelUpdateTime 榛樿涓?0锛堟湭淇敼杩囩瓑绾э級
+            // levelUpdateTime 默认为 0（未修改过等级）
             const newGiftId = await this.giftRepository.createGift({
               eventId: this.currentEvent.id,
               encryptedData,
               guestLevelWeight: guestLevel,
-              levelUpdateTime: 0, // 鏂板鏃朵负 0锛岃〃绀烘湭淇敼杩囩瓑绾?
+              levelUpdateTime: 0, // 新增时为 0，表示未修改过等级
             });
 
-            // 浼樺寲锛氱洿鎺ユ彃鍏ユ柊璁板綍鍒板唴瀛橈紝閬垮厤閲嶆柊鏌ヨ
+            // 优化：直接插入新记录到内存，避免重新查询
             const newGift = {
               id: newGiftId,
               eventId: this.currentEvent.id,
@@ -3729,10 +3728,10 @@ export function bootGiftBookApp() {
             this.gifts.push(newGift);
             this.giftManager.sortGiftsByLevel();
 
-            // 鏇存柊缂撳瓨
+            // 更新缓存
             this.giftManager.updateCacheOnAdd(giftData.amount);
 
-            // 璺宠浆鍒版柊璁板綍鎵€鍦ㄩ〉
+            // 跳转到新记录所在页
             const newIndex = this.gifts.findIndex((g) => g.id === newGiftId);
             if (newIndex !== -1) {
               this.currentPage = Math.floor(newIndex / app.getItemsPerPage()) + 1;
@@ -3740,34 +3739,34 @@ export function bootGiftBookApp() {
 
             this.ui.closeModal();
             this.ui.elements.addGiftForm.reset();
-            document.querySelector('input[name="payment-type"][value="鐜伴噾"]').checked = true;
+            document.querySelector('input[name="payment-type"][value="现金"]').checked = true;
             this.resetRemarkPresets();
             this.ui.elements.guestNameInput.focus();
             this.giftManager.render();
             this.speakGift(giftData.name, giftData.amount);
-            this.ui.showNotification("褰曞叆鎴愬姛锛?, "success");
+            this.ui.showNotification("录入成功！", "success");
             this.guestScreenService.syncToGuestScreen();
           } catch (error) {
             this.ui.closeModal();
-            console.error("褰曞叆澶辫触:", error);
-            this.ui.showNotification("褰曞叆澶辫触锛岃閲嶈瘯銆?, "error");
+            console.error("录入失败:", error);
+            this.ui.showNotification("录入失败，请重试。", "error");
           }
         }
 
         /**
-         * 濮撳悕鎼滅储
-         * 鏀寔鍚屽悕绛涢€変笌蹇嵎璺宠浆璇︽儏
+         * 姓名搜索
+         * 支持同名筛选与快捷跳转详情
          */
         handleSearch() {
           const searchTerm = this.ui.elements.searchNameInput.value.trim();
           if (!searchTerm) {
-            this.ui.showNotification("璇疯緭鍏ュ鍚嶈繘琛屾悳绱€?);
+            this.ui.showNotification("请输入姓名进行搜索。");
             return;
           }
 
           const results = [];
           for (let i = 0; i < this.gifts.length; i++) {
-            // 纭繚瑙ｅ瘑鍚庣殑 data 瀛樺湪
+            // 确保解密后的 data 存在
             if (this.gifts[i].data?.name.includes(searchTerm)) {
               results.push({ ...this.gifts[i], originalIndex: i });
             }
@@ -3775,7 +3774,7 @@ export function bootGiftBookApp() {
           this.ui.elements.searchNameInput.blur();
 
           if (results.length === 0) {
-            this.ui.showNotification(`娌℃湁鎵惧埌濮撳悕涓?\"${searchTerm}\" 鐨勮褰昤);
+            this.ui.showNotification(`没有找到姓名为 \"${searchTerm}\" 的记录`);
             return;
           }
 
@@ -3784,23 +3783,23 @@ export function bootGiftBookApp() {
               const giftData = r.data;
               const remarkText = this.formatRemarkDisplay(giftData.remarkData || null);
 
-              // 鍙湁褰?remarkText 鏈夊唴瀹规椂锛屾墠鐢熸垚澶囨敞鐨凥TML
-              const remarkHtml = remarkText ? `<p class="text-sm text-red-500 mt-1"><strong>澶囨敞:</strong> ${remarkText}</p>` : "";
+              // 只有当 remarkText 有内容时，才生成备注的HTML
+              const remarkHtml = remarkText ? `<p class="text-sm text-red-500 mt-1"><strong>备注:</strong> ${remarkText}</p>` : "";
 
               return `
                         <div class="p-3 border-b flex justify-between items-center">
                           <div>
-                            <p><strong>濮撳悕:</strong> ${giftData.name}</p>
-                            <p><strong>閲戦:</strong> ${giftData.amount.toFixed(2)} 鍏?(${giftData.type})</p>
+                            <p><strong>姓名:</strong> ${giftData.name}</p>
+                            <p><strong>金额:</strong> ${giftData.amount.toFixed(2)} 元 (${giftData.type})</p>
                             ${remarkHtml}
                           </div>
-                          <button class="view-details-btn themed-button-primary px-3 py-1 rounded" data-gift-index="${r.originalIndex}">鏌ョ湅璇︽儏</button>
+                          <button class="view-details-btn themed-button-primary px-3 py-1 rounded" data-gift-index="${r.originalIndex}">查看详情</button>
                         </div>
                       `;
             })
             .join("");
 
-          this.ui.showModal(`"${searchTerm}" 鐨勬悳绱㈢粨鏋渀, `<div class="max-h-80 overflow-y-auto">${resultsHtml}</div>`, [{ text: "鍏抽棴", class: "themed-button-secondary border px-4 py-2 rounded" }]);
+          this.ui.showModal(`"${searchTerm}" 的搜索结果`, `<div class="max-h-80 overflow-y-auto">${resultsHtml}</div>`, [{ text: "关闭", class: "themed-button-secondary border px-4 py-2 rounded" }]);
 
           setTimeout(() => {
             document.querySelectorAll(".view-details-btn").forEach((btn) => {
@@ -3814,15 +3813,15 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 灞曠ず绀奸噾璇︽儏寮圭獥锛屽苟缁戝畾璇︽儏鍖哄煙鎿嶄綔鎸夐挳
-         * @param {number} giftIndex - 褰撳墠绀奸噾鍦?this.gifts 涓殑涓嬫爣
-         * @param {Object} options - 棰濆閰嶇疆
-         * @param {boolean} options.fromStats - 鏄惁鏉ヨ嚜缁熻椤碉紙闅愯棌杩斿洖鎸夐挳锛?
+         * 展示礼金详情弹窗，并绑定详情区域操作按钮
+         * @param {number} giftIndex - 当前礼金在 this.gifts 中的下标
+         * @param {Object} options - 额外配置
+         * @param {boolean} options.fromStats - 是否来自统计页（隐藏返回按钮）
          *
-         * 鏍稿績鑱岃矗锛?
-         * - 娓叉煋绀奸噾鍩虹淇℃伅銆佸槈瀹剧瓑绾с€佸娉ㄨ鎯?
-         * - 鎺у埗绾犻敊銆佷慨鏀归噾棰濄€佸娉ㄣ€佹挙閿€绛夊叆鍙?
-         * - 鍦ㄥ瓨鍦ㄥ巻鍙茶褰曟椂鎷艰鏃堕棿绾垮苟鏀寔蹇収鏌ョ湅
+         * 核心职责：
+         * - 渲染礼金基础信息、嘉宾等级、备注详情
+         * - 控制纠错、修改金额、备注、撤销等入口
+         * - 在存在历史记录时拼装时间线并支持快照查看
          */
         showGiftDetails(giftIndex, options = {}) {
           const { fromStats = false } = options;
@@ -3839,36 +3838,36 @@ export function bootGiftBookApp() {
           const remainingAmountCorrections = Math.max(0, 1 - amountCorrectionCount);
           const canModifyAmount = !isAbolished && remainingAmountCorrections > 0;
 
-          // 鐢熸垚鍢夊绛夌骇閫夐」锛堜娇寰楀槈瀹剧瓑绾ч珮鐨勬帓鍦ㄥ墠闈級
+          // 生成嘉宾等级选项（使得嘉宾等级高的排在前面）
           const guestLevel = g.guestLevel !== undefined ? g.guestLevel : 0;
           const levelOptions = CONFIG.GUEST_LEVELS.map((levelName, index) => ({ levelName, index }))
-            .reverse() // 鍙嶈浆鏁扮粍锛屽緱绛夌骇楂樼殑鎺掑墠闈?
+            .reverse() // 反转数组，得等级高的排前面
             .map(({ levelName, index }) => `<option value="${index}" ${index === guestLevel ? "selected" : ""}>${levelName}</option>`)
             .join("");
 
-          // 鏍规嵁鍓╀綑绾犻敊/淇敼娆℃暟鎺у埗鎸夐挳鏄惁鍙敤鍙婃彁绀烘枃妗?
+          // 根据剩余纠错/修改次数控制按钮是否可用及提示文案
           const correctNameButtonHtml = !isAbolished
             ? `<button id="btn-correct-name" data-remaining-corrections="${remainingNameCorrections}" class="text-sm text-blue-600 hover:underline px-2 py-1 ${canCorrectName ? "" : "opacity-50 cursor-not-allowed"}" ${
-                canCorrectName ? "" : 'disabled data-fixed-disabled="true" title="濮撳悕绾犻敊娆℃暟宸茶揪涓婇檺"'
-              }>绾犻敊</button>`
+                canCorrectName ? "" : 'disabled data-fixed-disabled="true" title="姓名纠错次数已达上限"'
+              }>纠错</button>`
             : "";
           const modifyAmountButtonHtml = !isAbolished
             ? `<button id="btn-modify-amount" data-remaining-amount-corrections="${remainingAmountCorrections}" class="text-sm text-blue-600 hover:underline px-2 py-1 ${
                 canModifyAmount ? "" : "opacity-50 cursor-not-allowed"
-              }" ${canModifyAmount ? "" : 'disabled data-fixed-disabled="true" title="閲戦宸蹭慨鏀癸紝鏃犳硶鍐嶆璋冩暣"'}>淇敼</button>`
+              }" ${canModifyAmount ? "" : 'disabled data-fixed-disabled="true" title="金额已修改，无法再次调整"'}>修改</button>`
             : "";
           const detailsHtml = `
                       <div class="space-y-4 text-left h-full flex flex-col" id="current-details-container" data-gift-index="${giftIndex}">
                         <div class="flex justify-between items-center border-b pb-2 mb-2">
-                          <h4 class="font-bold text-lg">褰撳墠璁板綍淇℃伅</h4>
+                          <h4 class="font-bold text-lg">当前记录信息</h4>
                         </div>
                         ${
                           isAbolished
                             ? `
                           <div class="p-3 bg-red-50  border-red-500 text-red-800 rounded">
-                            <p class="font-bold flex items-center"><i class="ri-error-warning-line mr-2"></i>姝よ褰曞凡浣滃簾銆?/p>
-                            <p class="text-sm mt-1"><strong>浣滃簾鐞嗙敱锛?/strong>${g.abolishReason || "鏃?}</p>
-                            <p class="text-xs text-gray-600 mt-1">浣滃簾鏃堕棿锛?{new Date(g.abolishTime).toLocaleString("zh-CN")}</p>
+                            <p class="font-bold flex items-center"><i class="ri-error-warning-line mr-2"></i>此记录已作废。</p>
+                            <p class="text-sm mt-1"><strong>作废理由：</strong>${g.abolishReason || "无"}</p>
+                            <p class="text-xs text-gray-600 mt-1">作废时间：${new Date(g.abolishTime).toLocaleString("zh-CN")}</p>
                           </div>
                         `
                             : ""
@@ -3876,7 +3875,7 @@ export function bootGiftBookApp() {
 
                         <div id="name-display-area" class="flex justify-between items-center p-2 hover:bg-gray-50 rounded ${isAbolished ? "opacity-60" : ""}">
                           <div class="flex items-center gap-3 flex-wrap">
-                            <div><strong>濮撳悕:</strong> <span class="text-lg ml-2">${g.name}</span></div>
+                            <div><strong>姓名:</strong> <span class="text-lg ml-2">${g.name}</span></div>
                             ${
                               !isAbolished
                                 ? `
@@ -3894,16 +3893,16 @@ export function bootGiftBookApp() {
 
                         <div id="amount-display-area" class="flex justify-between items-center p-2 hover:bg-gray-50 rounded ${isAbolished ? "opacity-60" : ""}">
                           <div>
-                            <p><strong>閲戦:</strong> <span class="font-bold themed-text text-lg ml-2 ${isAbolished ? "line-through" : ""}">${Utils.formatCurrency(g.amount)}</span></p>
-                            <p class="text-sm text-gray-500 mt-1"><strong>绫诲瀷:</strong> ${g.type}</p>
+                            <p><strong>金额:</strong> <span class="font-bold themed-text text-lg ml-2 ${isAbolished ? "line-through" : ""}">${Utils.formatCurrency(g.amount)}</span></p>
+                            <p class="text-sm text-gray-500 mt-1"><strong>类型:</strong> ${g.type}</p>
                           </div>
                           ${modifyAmountButtonHtml}
                         </div>
 
                         <div id="remarks-display-area" class="p-2 hover:bg-gray-50 rounded ${isAbolished ? "opacity-60" : ""}">
                           <div class="flex justify-between items-start">
-                            <strong>澶囨敞:</strong>
-                            ${!isAbolished ? '<button id="btn-edit-remarks" class="text-sm text-blue-600 hover:underline px-2 py-1">淇敼</button>' : ""}
+                            <strong>备注:</strong>
+                            ${!isAbolished ? '<button id="btn-edit-remarks" class="text-sm text-blue-600 hover:underline px-2 py-1">修改</button>' : ""}
                           </div>
                           <div class="mt-1 text-gray-700 space-y-1">
                             ${this.formatRemarkDetailsDisplay(g.remarkData)}
@@ -3911,7 +3910,7 @@ export function bootGiftBookApp() {
                         </div>
 
                         <div class="text-sm text-gray-400 border-t pt-2 mt-auto">
-                          褰曞叆/淇敼鏃堕棿: ${new Date(g.timestamp).toLocaleString("zh-CN")}
+                          录入/修改时间: ${new Date(g.timestamp).toLocaleString("zh-CN")}
                         </div>
                       </div>`;
 
@@ -3924,7 +3923,7 @@ export function bootGiftBookApp() {
                           <div class="md:col-span-3 border-r pr-4 overflow-y-auto">${detailsHtml}</div>
                           <div class="md:col-span-3 pl-2 bg-gray-50 rounded-lg p-4">
                             <h4 class="font-bold text-lg border-b pb-2 mb-4 flex justify-between items-center">
-                              <span>鍘嗗彶淇敼鐥曡抗</span>
+                              <span>历史修改痕迹</span>
                             </h4>
                             ${timelineHtml}
                           </div>
@@ -3934,27 +3933,27 @@ export function bootGiftBookApp() {
             modalContent = detailsHtml;
           }
 
-          // 纭繚妯℃€佹寜閽彲瑙?
+          // 确保模态按钮可见
           this.ui.elements.modalActions.classList.remove("hidden");
 
-          // 鏍规嵁鏉ユ簮鍐冲畾鎸夐挳鏂囧瓧鍜岃涓?
+          // 根据来源决定按钮文字和行为
           const modalButtons = fromStats
             ? [
                 {
-                  text: "杩斿洖缁熻",
+                  text: "返回统计",
                   class: "themed-button-secondary border px-4 py-2 rounded",
                   handler: () => this.statsService.showStatistics(),
                   keepOpen: true,
                 },
               ]
             : [
-                { text: '<i class="ri-delete-bin-line mr-1"></i>浣滃簾姝よ褰?, class: "themed-button-secondary border px-4 py-2 rounded mr-auto", handler: () => this.giftManager.abolishGift(giftIndex), keepOpen: true },
-                { text: "鍏抽棴", class: "themed-button-secondary border px-4 py-2 rounded" },
+                { text: '<i class="ri-delete-bin-line mr-1"></i>作废此记录', class: "themed-button-secondary border px-4 py-2 rounded mr-auto", handler: () => this.giftManager.abolishGift(giftIndex), keepOpen: true },
+                { text: "关闭", class: "themed-button-secondary border px-4 py-2 rounded" },
               ];
 
-          this.ui.showModal(`${g.name} 鐨勭ぜ閲戣鎯?${hasHistory ? '<p class="text-sm text-orange-600 font-normal">锛堣鍛婏細姝ゅ瀹㈡暟鎹瓨鍦ㄤ慨鏀癸紝璇疯嚜琛岄獙璇佹暟鎹湡瀹炴€э紒锛?/p>' : ""}`, modalContent, modalButtons);
+          this.ui.showModal(`${g.name} 的礼金详情 ${hasHistory ? '<p class="text-sm text-orange-600 font-normal">（警告：此宾客数据存在修改，请自行验证数据真实性！）</p>' : ""}`, modalContent, modalButtons);
 
-          // 缁戝畾缂栬緫鍜屼綔搴熸寜閽簨浠?
+          // 绑定编辑和作废按钮事件
           setTimeout(() => {
             const btnCorrectName = document.getElementById("btn-correct-name");
             const btnModifyAmount = document.getElementById("btn-modify-amount");
@@ -3965,7 +3964,7 @@ export function bootGiftBookApp() {
             if (btnModifyAmount && !btnModifyAmount.disabled) btnModifyAmount.onclick = () => this.enableInlineEdit(giftIndex, "amount");
             if (btnEditRemarks) btnEditRemarks.onclick = () => this.enableInlineEdit(giftIndex, "remarks");
 
-            // 缁戝畾瀹惧绛夌骇閫夋嫨鍣ㄥ彉鍖栦簨浠?
+            // 绑定宾客等级选择器变化事件
             if (levelSelect) {
               levelSelect.addEventListener("change", async (e) => {
                 const newLevel = parseInt(e.target.value, 10);
@@ -3974,16 +3973,16 @@ export function bootGiftBookApp() {
                   const oldLevelName = CONFIG.GUEST_LEVELS[oldLevel];
                   const newLevelName = CONFIG.GUEST_LEVELS[newLevel];
 
-                  // 闇€瑕侀獙璇佸瘑鐮侊紝浣嗘敮鎸丯鍒嗛挓鍏嶅瘑
-                  const password = await this.requestAdminPassword("淇敼瀹惧绛夌骇", `鍗冲皢鎶?"${g.name}" 浠?"${oldLevelName}" 淇敼涓?"${newLevelName}"`, null);
+                  // 需要验证密码，但支持N分钟免密
+                  const password = await this.requestAdminPassword("修改宾客等级", `即将把 "${g.name}" 从 "${oldLevelName}" 修改为 "${newLevelName}"`, null);
 
                   if (password === null) {
-                    // 鐢ㄦ埛鍙栨秷锛屾仮澶嶅師鏉ョ殑鍊?
+                    // 用户取消，恢复原来的值
                     e.target.value = oldLevel;
                     return;
                   }
 
-                  // 鏇存柊瀹惧绛夌骇
+                  // 更新宾客等级
                   await this.updateGuestLevel(giftIndex, newLevel, oldLevel);
                 }
               });
@@ -3996,17 +3995,17 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 绀肩翱鏍峰紡璁剧疆
+         * 礼簿样式设置
          */
         async showGiftBookStyleModal() {
           if (Utils.isMobile()) {
-            this.ui.showNotification("绉诲姩绔浣跨敤榛樿鏍峰紡", "info");
+            this.ui.showNotification("移动端请使用默认样式", "info");
             return;
           }
 
           const isSolemn = this.currentEvent.theme === "theme-solemn";
 
-          // 瀹氫箟榛樿鏍峰紡鍊?
+          // 定义默认样式值
           const getDefaults = () => {
             return {
               name: { size: 20, color: "#333333", font: "" },
@@ -4025,7 +4024,7 @@ export function bootGiftBookApp() {
           const localFonts = style.localFonts || [];
           const defaults = getDefaults();
 
-          // 鑾峰彇褰撳墠鍥剧墖 URL
+          // 获取当前图片 URL
           const bgUrl = await ImageCache.getBackgroundUrl(this.currentEvent.id);
           let currentCoverUrl = "";
           if (this.currentEvent.coverType === "custom") {
@@ -4037,13 +4036,13 @@ export function bootGiftBookApp() {
             ...(this.currentEvent.printOptions || {}),
           };
 
-          // === 4. 鏋勫缓鏂囧瓧鏍峰紡 HTML (浣跨敤閰嶇疆鏁扮粍) ===
+          // === 4. 构建文字样式 HTML (使用配置数组) ===
           const fieldConfigs = [
-            { key: "name", label: "绀肩翱椤靛鍚?, type: "std" },
-            { key: "type", label: "绀肩翱椤垫爣绛?(绀奸噾/璐虹ぜ)", type: "std" },
-            { key: "amountChinese", label: "绀肩翱椤碉紙澶у啓閲戦锛?, type: "std" },
-            { key: "coverText", label: "灏侀潰椤垫爣棰?, type: "std" },
-            { key: "pageInfo", label: "鍩虹鏍峰紡", type: "print-special" }, // 鐗规畩绫诲瀷
+            { key: "name", label: "礼簿页姓名", type: "std" },
+            { key: "type", label: "礼簿页标签 (礼金/贺礼)", type: "std" },
+            { key: "amountChinese", label: "礼簿页（大写金额）", type: "std" },
+            { key: "coverText", label: "封面页标题", type: "std" },
+            { key: "pageInfo", label: "基础样式", type: "print-special" }, // 特殊类型
           ];
 
           const textStyleHtml = fieldConfigs
@@ -4052,7 +4051,7 @@ export function bootGiftBookApp() {
               const custom = style[field] || {};
               const def = defaults[field];
 
-              // 鏋勫缓瀛椾綋涓嬫媺妗?
+              // 构建字体下拉框
               const displayFont = custom.font || "";
               const fontOptions = localFonts
                 .map(
@@ -4064,26 +4063,26 @@ export function bootGiftBookApp() {
                 .join("");
               const fontSelectHtml = `
                     <div class="flex items-center">
-                      <label class="block font-medium text-gray-500 mr-1 whitespace-nowrap">瀛椾綋</label>
+                      <label class="block font-medium text-gray-500 mr-1 whitespace-nowrap">字体</label>
                       <select data-field="${field}" data-prop="font"
                               class="flex-1 w-full p-2 border border-gray-300 rounded themed-ring text-sm bg-white text-gray-700"
                               ${localFonts.length === 0 ? "disabled" : ""}>
-                        <option value="">绯荤粺榛樿瀛椾綋</option>
+                        <option value="">系统默认字体</option>
                         ${fontOptions}
                       </select>
                     </div>`;
 
-              // 鏍规嵁绫诲瀷鐢熸垚涓嶅悓鐨勮緭鍏ユ帶浠?
+              // 根据类型生成不同的输入控件
               let inputsHtml = "";
 
               if (config.type === "print-special") {
-                // pageInfo 鐗规畩甯冨眬锛氫富棰樿壊 + 鍩虹瀛楄壊 + 瀛椾綋
+                // pageInfo 特殊布局：主题色 + 基础字色 + 字体
                 const displayThemeColor = custom.themeColor || def.themeColor;
                 const displayBaseColor = custom.baseColor || def.baseColor;
                 inputsHtml = `
-                      <!-- 涓婚鑹?(杈规/椤靛ご) -->
+                      <!-- 主题色 (边框/页头) -->
                       <div class="flex items-center">
-                          <label class="block font-medium text-gray-500 mr-1 whitespace-nowrap">涓婚鑹?/label>
+                          <label class="block font-medium text-gray-500 mr-1 whitespace-nowrap">主题色</label>
                           <div class="flex flex-1 items-center w-full border border-gray-300 rounded overflow-hidden h-[38px] relative">
                               <input type="color" data-field="${field}" data-prop="themeColor" value="${displayThemeColor}"
                                   class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
@@ -4093,9 +4092,9 @@ export function bootGiftBookApp() {
                               </span>
                           </div>
                       </div>
-                      <!-- 鍩虹瀛楄壊 (椤佃剼/鍐呭) -->
+                      <!-- 基础字色 (页脚/内容) -->
                       <div class="flex items-center">
-                          <label class="block font-medium text-gray-500 mr-1 whitespace-nowrap">鍩虹瀛楄壊</label>
+                          <label class="block font-medium text-gray-500 mr-1 whitespace-nowrap">基础字色</label>
                           <div class="flex flex-1 items-center w-full border border-gray-300 rounded overflow-hidden h-[38px] relative">
                               <input type="color" data-field="${field}" data-prop="baseColor" value="${displayBaseColor}"
                                   class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
@@ -4108,20 +4107,20 @@ export function bootGiftBookApp() {
                       ${fontSelectHtml}
                    `;
               } else {
-                // 鏍囧噯甯冨眬锛氬瓧鍙?+ 棰滆壊 + 瀛椾綋
+                // 标准布局：字号 + 颜色 + 字体
                 const displaySize = custom.size || def.size;
                 const displayColor = custom.color || def.color;
 
                 inputsHtml = `
-                      <!-- 瀛楀彿 -->
+                      <!-- 字号 -->
                       <div class="flex items-center">
-                          <label class="block font-medium text-gray-500 mr-1 whitespace-nowrap">瀛楀彿 (px)</label>
+                          <label class="block font-medium text-gray-500 mr-1 whitespace-nowrap">字号 (px)</label>
                           <input type="number" data-field="${field}" data-prop="size" value="${displaySize}"
                               class="flex-1 w-full p-2 border border-gray-300 rounded themed-ring text-center font-bold text-gray-700 bg-gray-50 focus:bg-white">
                       </div>
-                      <!-- 棰滆壊 -->
+                      <!-- 颜色 -->
                       <div class="flex items-center">
-                          <label class="block font-medium text-gray-500 mr-1 whitespace-nowrap">棰滆壊</label>
+                          <label class="block font-medium text-gray-500 mr-1 whitespace-nowrap">颜色</label>
                           <div class="flex flex-1 items-center w-full border border-gray-300 rounded overflow-hidden h-[38px] relative">
                               <input type="color" data-field="${field}" data-prop="color" value="${displayColor}"
                                   class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
@@ -4145,98 +4144,98 @@ export function bootGiftBookApp() {
             })
             .join("");
 
-          // === HTML 鏋勫缓 ===
-          // 缁熶竴 ID 鍛藉悕瑙勮寖锛?style-cover-* 鍜?style-bg-*
+          // === HTML 构建 ===
+          // 统一 ID 命名规范： style-cover-* 和 style-bg-*
           const content = `
               <div class="space-y-6 text-left max-h-[75vh] pr-1">
 
-                <!-- 绗竴閮ㄥ垎锛氬浘鐗囪祫婧?(灏侀潰 & 鑳屾櫙) -->
+                <!-- 第一部分：图片资源 (封面 & 背景) -->
                 <div class="p-3 rounded border border-gray-200">
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <!-- 灏侀潰鍥鹃儴鍒?-->
+                      <!-- 封面图部分 -->
                       <div>
                           <div class="flex items-center justify-between mb-2">
                               <div class="flex items-center gap-3">
-                                  <label class="block text-sm font-bold text-gray-700">绀肩翱灏侀潰鍥?/label>
-                                  <!-- 鍒囨崲寮€鍏?-->
+                                  <label class="block text-sm font-bold text-gray-700">礼簿封面图</label>
+                                  <!-- 切换开关 -->
                                   <label class="relative h-5 w-16 cursor-pointer">
                                       <input type="checkbox" id="style-cover-toggle" class="sr-only peer" ${this.currentEvent.coverType === "custom" ? "checked" : ""}>
                                       <div class="h-full w-full rounded-full bg-gray-300 transition-colors duration-300 peer-checked:bg-[var(--button-bg-color)]"></div>
-                                      <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold transition-opacity duration-300 peer-checked:opacity-0">榛樿</span>
-                                      <span class="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-white opacity-0 transition-opacity duration-300 peer-checked:opacity-100">鑷畾涔?/span>
+                                      <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold transition-opacity duration-300 peer-checked:opacity-0">默认</span>
+                                      <span class="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-white opacity-0 transition-opacity duration-300 peer-checked:opacity-100">自定义</span>
                                       <div class="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow-md transition-transform duration-300 peer-checked:translate-x-[2.8rem]"></div>
                                   </label>
                               </div>
                           </div>
                           <div id="style-cover-section" class="mt-2 pl-1 ${this.currentEvent.coverType === "custom" ? "" : "hidden"}">
-                              <!-- 棰勮鍖?-->
+                              <!-- 预览区 -->
                               <div id="style-cover-preview-area" class="items-center gap-4 ${currentCoverUrl ? "flex" : "hidden"}">
-                                <img id="style-cover-img" src="${currentCoverUrl || ""}" alt="灏侀潰棰勮" class="rounded border bg-white p-1 h-16 w-auto object-contain shadow-sm">
-                                <button id="style-cover-remove-btn" class="text-sm text-red-600 hover:underline">鍒犻櫎灏侀潰鍥?/button>
+                                <img id="style-cover-img" src="${currentCoverUrl || ""}" alt="封面预览" class="rounded border bg-white p-1 h-16 w-auto object-contain shadow-sm">
+                                <button id="style-cover-remove-btn" class="text-sm text-red-600 hover:underline">删除封面图</button>
                               </div>
-                              <!-- 涓婁紶鍖?-->
+                              <!-- 上传区 -->
                               <div id="style-cover-upload-area" class="${currentCoverUrl ? "hidden" : "block"}">
                                 <input type="file" id="style-cover-upload" accept="image/*" class="w-full mt-2 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300" />
-                                 <p class="text-xs text-gray-500 mt-2 ml-1"> 寤鸿灏哄 595 x 842px (A4绾靛悜), 澶у皬涓嶈秴杩?M銆?/p>
+                                 <p class="text-xs text-gray-500 mt-2 ml-1"> 建议尺寸 595 x 842px (A4纵向), 大小不超过2M。</p>
                               </div>
                           </div>
                       </div>
 
-                      <!-- 鑳屾櫙鍥鹃儴鍒?-->
+                      <!-- 背景图部分 -->
                       <div>
-                          <label class="block text-sm font-bold text-gray-700 mb-2">绀肩翱椤佃儗鏅浘</label>
+                          <label class="block text-sm font-bold text-gray-700 mb-2">礼簿页背景图</label>
 
-                          <!-- 棰勮鍖?-->
+                          <!-- 预览区 -->
                           <div id="style-bg-preview-area" class="${bgUrl ? "flex" : "hidden"} items-center gap-4 transition-all">
                             <img id="style-bg-img" src="${bgUrl || ""}" class="rounded border bg-white p-1 h-16 w-auto object-contain shadow-sm">
-                            <button id="style-bg-remove-btn" class="text-sm text-red-600 hover:underline">鍒犻櫎鑳屾櫙鍥?/button>
+                            <button id="style-bg-remove-btn" class="text-sm text-red-600 hover:underline">删除背景图</button>
                           </div>
 
-                          <!-- 涓婁紶鍖?-->
+                          <!-- 上传区 -->
                           <div id="style-bg-upload-area" class="${bgUrl ? "hidden" : "block"} transition-all">
                              <input type="file" id="style-bg-upload" accept="image/*" class="w-full mt-2 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300" />
-                             <p class="text-xs text-gray-500 mt-2 ml-1"> 寤鸿娴呰壊搴曠汗銆侫4妯増, 寤鸿灏哄 842 x 595px銆?/p>
+                             <p class="text-xs text-gray-500 mt-2 ml-1"> 建议浅色底纹。A4横版, 建议尺寸 842 x 595px。</p>
                           </div>
                       </div>
                   </div>
                 </div>
                 
-                <!-- 绗簩閮ㄥ垎锛氭墦鍗板鍑洪€夐」 -->
+                <!-- 第二部分：打印导出选项 -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- 淇濇寔鍘熸湁鎵撳嵃閫夐」閫昏緫涓嶅彉 -->
+                    <!-- 保持原有打印选项逻辑不变 -->
                     <div class="flex gap-2 text-sm items-center flex-wrap">
-                      <label class="block text-sm font-bold text-gray-700 ">绀肩翱闄勯〉閫夐」锛?/label>
-                        <label class="flex items-center"><input type="checkbox" id="style-print-cover" class="w-4 h-4 themed-ring rounded mr-1" ${printOptions.printCover ? "checked" : ""}><span>灏侀潰</span></label>
+                      <label class="block text-sm font-bold text-gray-700 ">礼簿附页选项：</label>
+                        <label class="flex items-center"><input type="checkbox" id="style-print-cover" class="w-4 h-4 themed-ring rounded mr-1" ${printOptions.printCover ? "checked" : ""}><span>封面</span></label>
                         <label class="flex items-center"><input type="checkbox" id="style-show-cover-title" class="w-4 h-4 themed-ring rounded mr-1" ${
                           printOptions.showCoverTitle ? "checked" : ""
-                        }><span>灏侀潰鏍囬</span></label>
+                        }><span>封面标题</span></label>
                         <label class="flex items-center"><input type="checkbox" id="style-print-appendix" class="w-4 h-4 themed-ring rounded mr-1" ${
                           printOptions.printAppendix ? "checked" : ""
-                        }><span>澶囨敞闄勫綍</span></label>
-                        <label class="flex items-center"><input type="checkbox" id="style-print-summary" class="w-4 h-4 themed-ring rounded mr-1" ${printOptions.printSummary ? "checked" : ""}><span>鎬昏椤?/span></label>
-                        <label class="flex items-center"><input type="checkbox" id="style-print-end-page" class="w-4 h-4 themed-ring rounded mr-1" ${printOptions.printEndPage ? "checked" : ""}><span>灏佸簳</span></label>
+                        }><span>备注附录</span></label>
+                        <label class="flex items-center"><input type="checkbox" id="style-print-summary" class="w-4 h-4 themed-ring rounded mr-1" ${printOptions.printSummary ? "checked" : ""}><span>总计页</span></label>
+                        <label class="flex items-center"><input type="checkbox" id="style-print-end-page" class="w-4 h-4 themed-ring rounded mr-1" ${printOptions.printEndPage ? "checked" : ""}><span>封底</span></label>
                     </div>
                     <div class="flex gap-2 text-sm items-center">
-                        <label class="block text-sm font-bold text-gray-700 mr-1">绀肩翱姣忛〉鏄剧ず鏉℃暟:</label>
+                        <label class="block text-sm font-bold text-gray-700 mr-1">礼簿每页显示条数:</label>
                         <div class="flex items-center gap-2">
                             <input type="number" id="style-items-per-page" min="6" max="20" step="1" value="${this.getItemsPerPage()}"
                                 class="w-12 p-2 border border-gray-300 rounded themed-ring text-center font-bold bg-white">
-                            <span class="text-xs text-gray-500">寤鸿 10-20</span>
+                            <span class="text-xs text-gray-500">建议 10-20</span>
                         </div>
                     </div>
                   </div>
 
-                <!-- 绗笁閮ㄥ垎锛氭枃瀛楁牱寮忛厤缃?-->
+                <!-- 第三部分：文字样式配置 -->
                 <div>
                   <div class="flex justify-between items-center mb-3 pb-2 border-b">
-                      <h3 class="font-bold text-gray-800 text-sm">绀肩翱瀛椾綋涓庨鑹?/h3>
+                      <h3 class="font-bold text-gray-800 text-sm">礼簿字体与颜色</h3>
                       <div class="flex gap-2">
                           <button id="reset-style-btn" class="text-xs border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 px-3 py-1.5 rounded shadow-sm transition-colors flex items-center">
-                              <i class="ri-refresh-line mr-1"></i>鎭㈠榛樿
+                              <i class="ri-refresh-line mr-1"></i>恢复默认
                           </button>
                           ${
                             "queryLocalFonts" in window
-                              ? `<button id="load-local-fonts-btn" class="text-xs themed-button-primary px-3 py-1.5 rounded shadow-sm transition-colors flex items-center"><i class="ri-font-size mr-1"></i>浣跨敤鏈湴瀛椾綋</button>`
+                              ? `<button id="load-local-fonts-btn" class="text-xs themed-button-primary px-3 py-1.5 rounded shadow-sm transition-colors flex items-center"><i class="ri-font-size mr-1"></i>使用本地字体</button>`
                               : ""
                           }
                       </div>
@@ -4247,47 +4246,47 @@ export function bootGiftBookApp() {
                 </div>
               </div>`;
 
-          this.ui.showModal("绀肩翱鏍峰紡璁剧疆", content, [
-            { text: "鍙栨秷", class: "themed-button-secondary border px-4 py-2 rounded" },
+          this.ui.showModal("礼簿样式设置", content, [
+            { text: "取消", class: "themed-button-secondary border px-4 py-2 rounded" },
             {
-              text: "淇濆瓨璁剧疆",
+              text: "保存设置",
               class: "themed-button-primary px-6 py-2 rounded font-bold",
               handler: async () => {
                 try {
-                  // --- 鑳屾櫙鍥?---
+                  // --- 背景图 ---
                   const bgFile = document.getElementById("style-bg-upload")?.files[0];
                   const isBgRemoved = document.getElementById("style-bg-preview-area").classList.contains("hidden");
 
                   if (bgFile) {
                     if (bgFile.size > 10 * 1024 * 1024) {
-                      this.ui.showNotification("鑳屾櫙鍥剧墖杩囧ぇ", "error");
+                      this.ui.showNotification("背景图片过大", "error");
                       return;
                     }
                     await ImageCache.saveBackground(this.currentEvent.id, bgFile);
                   } else if (isBgRemoved) {
-                    // 浠呭湪鐐逛簡鍒犻櫎涓旀病鏈夋柊涓婁紶鏃舵墠鎵ц鍒犻櫎
+                    // 仅在点了删除且没有新上传时才执行删除
                     await ImageCache.deleteBackground(this.currentEvent.id);
                   }
 
-                  // --- 灏侀潰鍥?---
+                  // --- 封面图 ---
                   const coverFile = document.getElementById("style-cover-upload")?.files[0];
                   const isCoverRemoved = document.getElementById("style-cover-preview-area").classList.contains("hidden");
                   const isCoverCustom = document.getElementById("style-cover-toggle").checked;
                   let newCoverType = isCoverCustom ? "custom" : "default";
 
-                  // 鐗规畩鎯呭喌淇锛氶€変簡鑷畾涔夛紝浣嗘病鍥撅紙鏃х殑琚垹浜嗕笖娌℃柊鐨勶級锛屽己鍒跺洖閫€榛樿
+                  // 特殊情况修正：选了自定义，但没图（旧的被删了且没新的），强制回退默认
                   if (newCoverType === "custom" && !coverFile && isCoverRemoved) {
                     newCoverType = "default";
                   }
 
                   if (coverFile) {
                     await ImageCache.saveEventCover(this.currentEvent.id, coverFile);
-                    newCoverType = "custom"; // 鍙涓婁紶浜嗗浘灏辨槸鑷畾涔?
+                    newCoverType = "custom"; // 只要上传了图就是自定义
                   } else if (newCoverType === "default") {
                     await ImageCache.deleteEventCover(this.currentEvent.id);
                   }
 
-                  // === 淇濆瓨鎵撳嵃閫夐」 ===
+                  // === 保存打印选项 ===
                   const pdfEngine = this.currentEvent.printOptions?.pdfEngine || "browser";
                   const newPrintOptions = {
                     printCover: document.getElementById("style-print-cover").checked,
@@ -4298,12 +4297,12 @@ export function bootGiftBookApp() {
                     pdfEngine: pdfEngine,
                   };
 
-                  // === 淇濆瓨鏂囧瓧鏍峰紡 ===
+                  // === 保存文字样式 ===
                   const currentDefaults = getDefaults();
                   const newStyle = { localFonts: this.currentEvent.customStyle?.localFonts || [] };
 
                   ["coverText", "pageInfo", "name", "type", "amountChinese"].forEach((field) => {
-                    // 鏀堕泦杈撳叆鍊?
+                    // 收集输入值
                     const fontSel = document.querySelector(`select[data-field="${field}"][data-prop="font"]`);
                     const inputFont = fontSel ? fontSel.value : "";
 
@@ -4312,7 +4311,7 @@ export function bootGiftBookApp() {
                     const def = currentDefaults[field];
 
                     if (field === "pageInfo") {
-                      // 鐗规畩澶勭悊 pageInfo 鐨勪袱涓鑹?
+                      // 特殊处理 pageInfo 的两个颜色
                       const themeColorInp = document.querySelector(`input[data-field="${field}"][data-prop="themeColor"]`);
                       const baseColorInp = document.querySelector(`input[data-field="${field}"][data-prop="baseColor"]`);
 
@@ -4322,7 +4321,7 @@ export function bootGiftBookApp() {
                       if (themeVal && themeVal !== def.themeColor.toLowerCase()) fieldConfig.themeColor = themeVal;
                       if (baseVal && baseVal !== def.baseColor.toLowerCase()) fieldConfig.baseColor = baseVal;
                     } else {
-                      // 鏍囧噯澶勭悊 Size / Color
+                      // 标准处理 Size / Color
                       const sizeInp = document.querySelector(`input[data-field="${field}"][data-prop="size"]`);
                       const colorInp = document.querySelector(`input[data-field="${field}"][data-prop="color"]`);
 
@@ -4334,7 +4333,7 @@ export function bootGiftBookApp() {
                       if (inputColor && inputColor !== def.color.toLowerCase()) fieldConfig.color = inputColor;
                     }
 
-                    // 濡傛灉鏈夎嚜瀹氫箟閰嶇疆鍒欎繚瀛?
+                    // 如果有自定义配置则保存
                     if (Object.keys(fieldConfig).length > 0) newStyle[field] = fieldConfig;
                   });
 
@@ -4358,18 +4357,18 @@ export function bootGiftBookApp() {
                   this.giftManager.ensureCurrentPageDecrypted();
                   this.giftManager.render();
                   this.session.save(this.currentEvent, this.currentPassword);
-                  this.ui.showNotification("鏍峰紡鍙婃墦鍗拌缃凡淇濆瓨", "success");
+                  this.ui.showNotification("样式及打印设置已保存", "success");
                 } catch (error) {
-                  console.error("淇濆瓨鏍峰紡澶辫触:", error);
-                  this.ui.showNotification("淇濆瓨澶辫触锛岃閲嶈瘯", "error");
+                  console.error("保存样式失败:", error);
+                  this.ui.showNotification("保存失败，请重试", "error");
                 }
               },
             },
           ]);
 
-          // === 浜嬩欢缁戝畾 ===
+          // === 事件绑定 ===
           setTimeout(() => {
-            // 杈呭姪鍑芥暟锛氱粦瀹氬浘鐗囬瑙?绉婚櫎閫昏緫
+            // 辅助函数：绑定图片预览/移除逻辑
             const bindImageLogic = (prefix) => {
               const uploadInput = document.getElementById(`${prefix}-upload`);
               const previewArea = document.getElementById(`${prefix}-preview-area`);
@@ -4395,7 +4394,7 @@ export function bootGiftBookApp() {
               if (removeBtn) {
                 removeBtn.onclick = () => {
                   previewImg.src = "";
-                  uploadInput.value = ""; // 娓呯┖ input value
+                  uploadInput.value = ""; // 清空 input value
                   previewArea.classList.add("hidden");
                   previewArea.classList.remove("flex");
                   uploadArea.classList.remove("hidden");
@@ -4403,11 +4402,11 @@ export function bootGiftBookApp() {
               }
             };
 
-            // 缁戝畾灏侀潰鍜岃儗鏅?
+            // 绑定封面和背景
             bindImageLogic("style-cover");
             bindImageLogic("style-bg");
 
-            // 灏侀潰鍒囨崲寮€鍏?
+            // 封面切换开关
             const coverToggle = document.getElementById("style-cover-toggle");
             const coverSection = document.getElementById("style-cover-section");
             if (coverToggle) {
@@ -4416,7 +4415,7 @@ export function bootGiftBookApp() {
               });
             }
 
-            // 棰滆壊閫夋嫨鍣ㄥ疄鏃堕瑙?
+            // 颜色选择器实时预览
             document.querySelectorAll('input[type="color"]').forEach((input) => {
               input.addEventListener("input", (e) => {
                 const val = e.target.value;
@@ -4430,20 +4429,20 @@ export function bootGiftBookApp() {
               });
             });
 
-            // 閲嶇疆鎸夐挳閫昏緫
+            // 重置按钮逻辑
             document.getElementById("reset-style-btn")?.addEventListener("click", () => {
               const defs = getDefaults();
-              // 閲嶇疆鏍囧噯瀛楁
+              // 重置标准字段
               ["name", "type", "amountChinese", "coverText"].forEach((key) => {
                 const sInput = document.querySelector(`input[data-field="${key}"][data-prop="size"]`);
                 const cInput = document.querySelector(`input[data-field="${key}"][data-prop="color"]`);
                 if (sInput) sInput.value = defs[key].size;
                 if (cInput) {
                   cInput.value = defs[key].color;
-                  cInput.dispatchEvent(new Event("input")); // 瑙﹀彂棰勮鏇存柊
+                  cInput.dispatchEvent(new Event("input")); // 触发预览更新
                 }
               });
-              // 閲嶇疆 pageInfo 鐗规畩瀛楁
+              // 重置 pageInfo 特殊字段
               const themeInput = document.querySelector(`input[data-field="pageInfo"][data-prop="themeColor"]`);
               const baseInput = document.querySelector(`input[data-field="pageInfo"][data-prop="baseColor"]`);
               if (themeInput) {
@@ -4455,13 +4454,13 @@ export function bootGiftBookApp() {
                 baseInput.dispatchEvent(new Event("input"));
               }
 
-              // 閲嶇疆鎵€鏈夊瓧浣撻€夋嫨
+              // 重置所有字体选择
               document.querySelectorAll('select[data-prop="font"]').forEach((sel) => (sel.value = ""));
 
-              this.ui.showNotification("宸查噸缃粯璁ゅ€?(闇€鐐瑰嚮淇濆瓨鐢熸晥)", "info");
+              this.ui.showNotification("已重置默认值 (需点击保存生效)", "info");
             });
 
-            // 鍔犺浇鏈湴瀛椾綋
+            // 加载本地字体
             document.getElementById("load-local-fonts-btn")?.addEventListener("click", async () => {
               try {
                 const fonts = await window.queryLocalFonts();
@@ -4473,17 +4472,17 @@ export function bootGiftBookApp() {
                 this.currentEvent.customStyle = this.currentEvent.customStyle || {};
                 this.currentEvent.customStyle.localFonts = safeFonts;
                 await this.giftRepository.updateEvent(this.currentEvent);
-                this.showGiftBookStyleModal(); // 閲嶆柊鎵撳紑浠ュ埛鏂板垪琛?
-                this.ui.showNotification(`宸插姞杞?${safeFonts.length} 绉嶅瓧浣揱, "success");
+                this.showGiftBookStyleModal(); // 重新打开以刷新列表
+                this.ui.showNotification(`已加载 ${safeFonts.length} 种字体`, "success");
               } catch (e) {
-                this.ui.showNotification("瀛椾綋鍔犺浇鍙栨秷鎴栦笉鏀寔", "info");
+                this.ui.showNotification("字体加载取消或不支持", "info");
               }
             });
           }, 50);
         }
 
         /**
-         * 搴旂敤鑷畾涔夌ぜ绨挎牱寮忓埌灞忓箷 + 鎵撳嵃鍙橀噺
+         * 应用自定义礼簿样式到屏幕 + 打印变量
          */
         async applyCustomGiftBookStyle() {
           const s = this.currentEvent?.customStyle || {};
@@ -4515,7 +4514,7 @@ export function bootGiftBookApp() {
           const itemsCount = this.getItemsPerPage();
           root.style.setProperty("--gift-grid-columns", itemsCount.toString());
 
-          // === 鏇存柊锛氬瓧娈垫槧灏勪笌鍙橀噺搴旂敤 ===
+          // === 更新：字段映射与变量应用 ===
           const stdFields = { name: "name", type: "type", amountChinese: "amount-chinese", coverText: "cover-text" };
           Object.entries(stdFields).forEach(([field, cssPrefix]) => {
             const cfg = s[field];
@@ -4557,9 +4556,9 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 缁戝畾鍘嗗彶璁板綍鏌ョ湅鎸夐挳浜嬩欢
-         * @param {Array} history - 鍙樻洿鍘嗗彶
-         * @param {number} giftIndex - 绀奸噾绱㈠紩
+         * 绑定历史记录查看按钮事件
+         * @param {Array} history - 变更历史
+         * @param {number} giftIndex - 礼金索引
          */
         bindViewOriginalEvents(history, giftIndex) {
           const showSnapshot = (historyIndex) => {
@@ -4571,20 +4570,20 @@ export function bootGiftBookApp() {
 
             const content = `
                         <div class="space-y-2 p-4 bg-gray-100 rounded text-left">
-                          <p><strong>濮撳悕:</strong> ${snapshot.name}</p>
-                          <p><strong>閲戦:</strong> ${Utils.formatCurrency(snapshot.amount)} (${snapshot.type})</p>
-                          <p><strong>瀹惧绛夌骇:</strong> ${snapshotLevelName}</p>
-                          <p><strong>澶囨敞:</strong> ${remarkDisplay || "鏃?}</p>
-                          <p class="text-xs text-gray-500 border-t pt-2 mt-2">姝よ褰曚簬 ${new Date(history[historyIndex].timestamp).toLocaleString()} 琚慨鏀瑰瓨妗ｃ€?/p>
+                          <p><strong>姓名:</strong> ${snapshot.name}</p>
+                          <p><strong>金额:</strong> ${Utils.formatCurrency(snapshot.amount)} (${snapshot.type})</p>
+                          <p><strong>宾客等级:</strong> ${snapshotLevelName}</p>
+                          <p><strong>备注:</strong> ${remarkDisplay || "无"}</p>
+                          <p class="text-xs text-gray-500 border-t pt-2 mt-2">此记录于 ${new Date(history[historyIndex].timestamp).toLocaleString()} 被修改存档。</p>
                         </div>
                       `;
 
             this.ui.elements.modal.classList.remove("modal-large");
-            // 纭繚妯℃€佹寜閽彲瑙?
+            // 确保模态按钮可见
             this.ui.elements.modalActions.classList.remove("hidden");
-            this.ui.showModal("鍘嗗彶璁板綍蹇収", content, [
+            this.ui.showModal("历史记录快照", content, [
               {
-                text: "杩斿洖璇︽儏",
+                text: "返回详情",
                 class: "themed-button-secondary border px-4 py-2 rounded",
                 handler: () => this.showGiftDetails(giftIndex),
                 keepOpen: true,
@@ -4598,20 +4597,20 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 鍚姩绀奸噾璇︽儏鍖哄煙鐨勮鍐呯紪杈戣兘鍔?
-         * 鏍规嵁 fieldType 涓嶅悓鐢熸垚濮撳悕銆侀噾棰濄€佸娉ㄧ殑缂栬緫鐣岄潰
-         * - 濮撳悕锛氭寜瀛楃鎷嗗垎骞堕檺鍒舵瘡娆＄籂閿欑殑淇敼鏁伴噺
-         * - 閲戦锛氭彁渚涢噾棰濊緭鍏ヤ笌鏀舵鏂瑰紡鍒囨崲
-         * - 澶囨敞锛氬鐢ㄦā鎬佺獥琛ㄥ崟鏀堕泦缁撴瀯鍖栧娉?
+         * 启动礼金详情区域的行内编辑能力
+         * 根据 fieldType 不同生成姓名、金额、备注的编辑界面
+         * - 姓名：按字符拆分并限制每次纠错的修改数量
+         * - 金额：提供金额输入与收款方式切换
+         * - 备注：复用模态窗表单收集结构化备注
          */
         enableInlineEdit(giftIndex, fieldType) {
           const g = this.gifts[giftIndex].data;
           let targetAreaId, editHtml, saveHandler;
           let nameEditConfig = null;
 
-          // 缁熶竴绠＄悊璇︽儏鍖哄煙鐨勬搷浣滄寜閽紝鏂逛究鍦ㄧ紪杈戞椂绂佺敤/鎭㈠鐘舵€?
+          // 统一管理详情区域的操作按钮，方便在编辑时禁用/恢复状态
           const allButtons = ["btn-correct-name", "btn-modify-amount", "btn-edit-remarks"];
-          // 鏍规嵁缂栬緫鐘舵€佷复鏃剁鐢?鎭㈠绾犻敊銆侀噾棰濅笌澶囨敞鎸夐挳
+          // 根据编辑状态临时禁用/恢复纠错、金额与备注按钮
           const setInlineButtonsDisabled = (disabled) => {
             allButtons.forEach((btnId) => {
               const btn = document.getElementById(btnId);
@@ -4634,10 +4633,10 @@ export function bootGiftBookApp() {
           };
 
           const cancelHandler = () => this.showGiftDetails(giftIndex);
-          const cancelBtnHtml = `<button id="inline-cancel" class="text-sm px-3 py-1 rounded themed-button-secondary border">鍙栨秷</button>`;
-          const saveBtnHtml = `<button id="inline-save" class="text-sm px-3 py-1 rounded themed-button-primary">淇濆瓨</button>`;
+          const cancelBtnHtml = `<button id="inline-cancel" class="text-sm px-3 py-1 rounded themed-button-secondary border">取消</button>`;
+          const saveBtnHtml = `<button id="inline-save" class="text-sm px-3 py-1 rounded themed-button-primary">保存</button>`;
 
-          // 濮撳悕绾犻敊锛氭寜瀛楃鎷嗗垎骞跺熀浜庡巻鍙叉鏁伴檺鍒跺彲缂栬緫鏁伴噺
+          // 姓名纠错：按字符拆分并基于历史次数限制可编辑数量
           if (fieldType === "name") {
             let originalChars = Array.from(g.name || "");
             if (originalChars.length === 0) originalChars = [""];
@@ -4645,24 +4644,24 @@ export function bootGiftBookApp() {
             const computedLimit = nameLength <= 2 ? 1 : nameLength === 3 ? 2 : 3;
             const correctionCount = countNameCorrections(g.history);
             if (correctionCount >= 2) {
-              this.ui.showNotification("璇ョぜ閲戝鍚嶇籂閿欐鏁板凡杈句笂闄愩€?, "info");
+              this.ui.showNotification("该礼金姓名纠错次数已达上限。", "info");
               return;
             }
             let maxEditable = Math.max(1, Math.min(computedLimit, nameLength));
             if (correctionCount === 1) {
-              // 绗簩娆＄籂閿欙細鏃犺濮撳悕闀垮害锛屾渶澶氬彧鑳戒慨鏀逛竴涓瓧绗?
+              // 第二次纠错：无论姓名长度，最多只能修改一个字符
               maxEditable = 1;
             }
             setInlineButtonsDisabled(true);
-            // 灞曠ず鍓╀綑绾犻敊娆℃暟锛屼究浜庢彁绀虹敤鎴峰綋鍓嶉搴?
+            // 展示剩余纠错次数，便于提示用户当前额度
             const remainingCorrections = Math.max(0, 2 - correctionCount);
-            // 杞箟鍗曞瓧杈撳叆鍐呭锛岄伩鍏嶇壒娈婂瓧绗︾牬鍧?HTML
+            // 转义单字输入内容，避免特殊字符破坏 HTML
             const escapeChar = (char) => String(char).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#39;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
             nameEditConfig = { originalChars, maxEditable };
             targetAreaId = "name-display-area";
             editHtml = `
                       <div class="themed-edit-area text-center space-y-3">
-                        <label class="block font-medium">绾犻敊濮撳悕</label>
+                        <label class="block font-medium">纠错姓名</label>
                         <div id="inline-name-inputs" class="flex justify-center gap-2 flex-wrap mb-1">
                           ${originalChars
                             .map(
@@ -4673,7 +4672,7 @@ export function bootGiftBookApp() {
                             )
                             .join("")}
                         </div>
-                        <p class="text-xs text-gray-500">鏈鏈€澶氬彲淇敼${maxEditable}涓瓧锛屽墿浣欑籂閿欐鏁?{remainingCorrections}娆°€?/p>
+                        <p class="text-xs text-gray-500">本次最多可修改${maxEditable}个字，剩余纠错次数${remainingCorrections}次。</p>
                         <div class="flex justify-center space-x-2">${cancelBtnHtml}${saveBtnHtml}</div>
                       </div>`;
             saveHandler = async () => {
@@ -4683,40 +4682,40 @@ export function bootGiftBookApp() {
               if (inputs.length !== originalChars.length) return cancelHandler();
               const updatedChars = inputs.map((input) => input.value.trim());
               if (updatedChars.some((char) => char.length === 0)) {
-                this.ui.showNotification("濮撳悕鐨勬瘡涓瓧閮戒笉鑳戒负绌恒€?, "error");
+                this.ui.showNotification("姓名的每个字都不能为空。", "error");
                 return;
               }
-              // 缁熻涓庡師濮嬪鍚嶄笉鍚岀殑瀛楃鏁伴噺锛岀敤浜庨搴︽牎楠?
+              // 统计与原始姓名不同的字符数量，用于额度校验
               const changedCount = updatedChars.reduce((count, value, index) => (value !== originalChars[index] ? count + 1 : count), 0);
               if (changedCount === 0) {
-                this.ui.showNotification("濮撳悕鏈彂鐢熷彉鍖栥€?, "info");
+                this.ui.showNotification("姓名未发生变化。", "info");
                 return;
               }
               if (changedCount > maxEditable) {
-                this.ui.showNotification(`鏈鏈€澶氬彲淇敼${maxEditable}涓瓧銆俙, "error");
+                this.ui.showNotification(`本次最多可修改${maxEditable}个字。`, "error");
                 return;
               }
-              // 楠岃瘉閫氳繃鍚庡悎鎴愭柊鐨勫畬鏁村鍚嶅苟鎻愪氦淇濆瓨
+              // 验证通过后合成新的完整姓名并提交保存
               const newName = updatedChars.join("");
               if (!newName || newName === g.name) return cancelHandler();
-              const changeLog = `灏嗗鍚嶇敱 "${g.name}" 鏇存涓?"${newName}"`;
+              const changeLog = `将姓名由 "${g.name}" 更正为 "${newName}"`;
               await this.giftManager.performUpdate(giftIndex, { name: newName }, changeLog, "correction");
             };
-            // 閲戦璋冩暣锛氬悓鏃跺厑璁镐慨鏀归噾棰濅笌鏀舵鏂瑰紡
+            // 金额调整：同时允许修改金额与收款方式
           } else if (fieldType === "amount") {
             const amountCorrectionCount = countAmountCorrections(g.history);
             if (amountCorrectionCount >= 1) {
-              this.ui.showNotification("璇ョぜ閲戦噾棰濆凡淇敼杩囷紝鏃犳硶鍐嶆璋冩暣銆?, "info");
+              this.ui.showNotification("该礼金金额已修改过，无法再次调整。", "info");
               return;
             }
             setInlineButtonsDisabled(true);
             targetAreaId = "amount-display-area";
             editHtml = `
                       <div class="themed-edit-area">
-                        <label>淇敼閲戦涓庣被鍨?/label>
+                        <label>修改金额与类型</label>
                         <input type="number" id="inline-edit-amount" value="${g.amount}" min="0" step="0.01" class="w-full p-2 border rounded themed-ring mb-2">
                         <div class="flex flex-wrap gap-x-3 gap-y-1 mb-2">
-                          ${["鐜伴噾", "鏀粯瀹?, "寰俊", "鍏朵粬"]
+                          ${["现金", "支付宝", "微信", "其他"]
                             .map(
                               (type) => `
                             <label class="flex items-center text-sm font-normal">
@@ -4726,95 +4725,95 @@ export function bootGiftBookApp() {
                             )
                             .join("")}
                         </div>
-                        <p class="text-xs text-gray-500 mb-2">鎻愮ず锛氶噾棰濅粎鏀寔淇敼涓€娆★紝璇疯皑鎱庢搷浣溿€?/p>
+                        <p class="text-xs text-gray-500 mb-2">提示：金额仅支持修改一次，请谨慎操作。</p>
                         <div class="flex justify-end space-x-2">${cancelBtnHtml}${saveBtnHtml}</div>
                       </div>`;
             saveHandler = async () => {
-              // 瑙ｆ瀽鐢ㄦ埛杈撳叆鐨勯噾棰濓紝骞跺悓姝ヨ褰曟柊鐨勬敹娆炬柟寮?
+              // 解析用户输入的金额，并同步记录新的收款方式
               const newAmount = parseFloat(document.getElementById("inline-edit-amount").value);
               const newType = document.querySelector('input[name="inline-edit-type"]:checked').value;
-              if (isNaN(newAmount) || newAmount < 0) return this.ui.showNotification("璇疯緭鍏ユ湁鏁堥噾棰濄€?, "error");
+              if (isNaN(newAmount) || newAmount < 0) return this.ui.showNotification("请输入有效金额。", "error");
 
               if (newAmount === g.amount && newType === g.type) return cancelHandler();
 
               let logs = [];
-              if (newAmount !== g.amount) logs.push(`灏嗛噾棰濈敱 ${g.amount} 淇敼涓?${newAmount}`);
-              if (newType !== g.type) logs.push(`灏嗙被鍨嬬敱 ${g.type} 淇敼涓?${newType}`);
-              await this.giftManager.performUpdate(giftIndex, { amount: newAmount, type: newType }, logs.join("锛?), "correction");
+              if (newAmount !== g.amount) logs.push(`将金额由 ${g.amount} 修改为 ${newAmount}`);
+              if (newType !== g.type) logs.push(`将类型由 ${g.type} 修改为 ${newType}`);
+              await this.giftManager.performUpdate(giftIndex, { amount: newAmount, type: newType }, logs.join("，"), "correction");
             };
-            // 澶囨敞缂栬緫锛氬鐢ㄧ粺涓€妯℃€佺獥鍙ｄ互淇濇寔浣撻獙涓€鑷?
+            // 备注编辑：复用统一模态窗口以保持体验一致
           } else if (fieldType === "remarks") {
             setInlineButtonsDisabled(true);
-            // 澶囨敞缂栬緫锛氱洿鎺ュ湪涓€涓柊鐨勩€佸共鍑€鐨勬ā鎬佺獥鍙ｄ腑澶勭悊
-            // 澶囨敞缂栬緫鐩存帴鍞よ捣妯℃€佺獥锛屽鐢ㄧ粺涓€鐨勫瓧娈垫覆鏌撻€昏緫
+            // 备注编辑：直接在一个新的、干净的模态窗口中处理
+            // 备注编辑直接唤起模态窗，复用统一的字段渲染逻辑
             const currentRemarkData = this.normalizeRemarkData(g.remarkData);
 
-            // 浣跨敤缁熶竴鐨勬柟娉曞姩鎬佺敓鎴愭墍鏈夊娉ㄥ瓧娈电殑杈撳叆琛ㄥ崟HTML
+            // 使用统一的方法动态生成所有备注字段的输入表单HTML
             const modalContent = `
                         <div class="space-y-3 text-left">
                           ${this.generateRemarkInputsHTML(currentRemarkData)}
                         </div>
                       `;
 
-            // 瀹氫箟淇濆瓨鎸夐挳鐨勭偣鍑讳簨浠跺鐞嗗櫒
+            // 定义保存按钮的点击事件处理器
             const saveRemarkHandler = async () => {
-              // 浠庢ā鎬佹鐨勮緭鍏ユ涓敹闆嗘渶鏂扮殑澶囨敞鏁版嵁
+              // 从模态框的输入框中收集最新的备注数据
               const newRemarkData = this.collectRemarkData(true);
 
-              // 姣旇緝鏂版棫鏁版嵁锛屽鏋滄病鏈夊疄闄呭彉鍖栵紝鍒欑洿鎺ヨ繑鍥炶鎯呴〉锛岄伩鍏嶄笉蹇呰鐨勬搷浣?
+              // 比较新旧数据，如果没有实际变化，则直接返回详情页，避免不必要的操作
               if (JSON.stringify(currentRemarkData) === JSON.stringify(newRemarkData)) {
-                this.showGiftDetails(giftIndex); // 鐩存帴杩斿洖锛屼笉鍏抽棴锛岃鐢ㄦ埛鐪嬪埌鍘熸牱
+                this.showGiftDetails(giftIndex); // 直接返回，不关闭，让用户看到原样
                 return;
               }
 
-              // 濡傛灉鏈夊彉鍖栵紝鍒欏姩鎬佺敓鎴愯缁嗙殑淇敼鏃ュ織
+              // 如果有变化，则动态生成详细的修改日志
               const changes = [];
               this.REMARK_LABELS.forEach(({ key, label }) => {
                 const oldValue = currentRemarkData[key] || "";
                 const newValue = newRemarkData[key] || "";
                 if (oldValue !== newValue) {
                   const fieldName = label;
-                  const from = oldValue ? `"${oldValue}"` : "锛堢┖锛?;
-                  const to = newValue ? `"${newValue}"` : "锛堢┖锛?;
-                  changes.push(`${fieldName}浠?${from} 淇敼涓?${to}`);
+                  const from = oldValue ? `"${oldValue}"` : "（空）";
+                  const to = newValue ? `"${newValue}"` : "（空）";
+                  changes.push(`${fieldName}从 ${from} 修改为 ${to}`);
                 }
               });
 
-              const changeLog = changes.join("锛?);
+              const changeLog = changes.join("；");
 
-              // 鐞嗚涓婏紝濡傛灉 changeLog 涓虹┖锛屼笂闈㈢殑 JSON 姣旇緝灏变細杩斿洖锛屼絾浣滀负鍙岄噸淇濋殰
+              // 理论上，如果 changeLog 为空，上面的 JSON 比较就会返回，但作为双重保障
               if (!changeLog) {
                 this.showGiftDetails(giftIndex);
                 return;
               }
 
-              // 鎵ц鏇存柊鎿嶄綔
+              // 执行更新操作
               await this.giftManager.performUpdate(giftIndex, { remarkData: newRemarkData }, changeLog, "remark");
             };
 
-            // 鏄剧ず妯℃€佹
-            this.ui.showModal("淇敼澶囨敞", modalContent, [
+            // 显示模态框
+            this.ui.showModal("修改备注", modalContent, [
               {
-                text: "杩斿洖璇︽儏",
+                text: "返回详情",
                 class: "themed-button-secondary border px-4 py-2 rounded",
                 role: "secondary",
-                handler: () => this.showGiftDetails(giftIndex), // 鐐瑰嚮杩斿洖鏃讹紝閲嶆柊娓叉煋璇︽儏寮圭獥
+                handler: () => this.showGiftDetails(giftIndex), // 点击返回时，重新渲染详情弹窗
                 keepOpen: true,
               },
               {
-                text: "淇濆瓨",
+                text: "保存",
                 class: "themed-button-primary px-4 py-2 rounded",
                 role: "primary",
                 handler: saveRemarkHandler,
-                keepOpen: true, // 淇濇寔鎵撳紑锛岀洿鍒颁繚瀛樻垚鍔熸垨澶辫触鍚庣敱绋嬪簭鍐冲畾涓嬩竴姝?
+                keepOpen: true, // 保持打开，直到保存成功或失败后由程序决定下一步
               },
             ]);
 
-            // 纭繚妯℃€佹涓嶆槸澶у昂瀵告ā寮?
+            // 确保模态框不是大尺寸模式
             this.ui.elements.modal.classList.remove("modal-large");
 
-            // 寤惰繜鍚庯紝鑷姩鑱氱劍鍒扮涓€涓娉ㄨ緭鍏ユ锛屾彁鍗囩敤鎴蜂綋楠?
-            // 浣跨敤 querySelector 淇濊瘉鑳芥壘鍒扮敱 REMARK_LABELS 瀹氫箟鐨勭涓€涓瓧娈?
+            // 延迟后，自动聚焦到第一个备注输入框，提升用户体验
+            // 使用 querySelector 保证能找到由 REMARK_LABELS 定义的第一个字段
             setTimeout(() => {
               const firstRemarkKey = this.REMARK_LABELS.find((f) => f.key !== "custom")?.key;
               if (firstRemarkKey) {
@@ -4830,7 +4829,7 @@ export function bootGiftBookApp() {
             document.getElementById("inline-cancel").onclick = cancelHandler;
             document.getElementById("inline-save").onclick = saveHandler;
 
-            // 缁戝畾鍥炶溅閿繚瀛橀€昏緫
+            // 绑定回车键保存逻辑
             const handleEnterKey = (e) => {
               const isTextarea = e.target?.tagName === "TEXTAREA";
               const shouldSave = e.key === "Enter" && !isTextarea;
@@ -4844,17 +4843,17 @@ export function bootGiftBookApp() {
 
             this.ui.elements.modalActions.classList.add("hidden");
 
-            // 濮撳悕绾犻敊涓撶敤浜や簰锛氱洃鍚緭鍏ュ苟鍦ㄨ揪涓婇檺鏃剁鐢ㄥ叾浠栧瓧绗?
+            // 姓名纠错专用交互：监听输入并在达上限时禁用其他字符
             if (fieldType === "name" && nameEditConfig) {
               const nameInputsContainer = document.getElementById("inline-name-inputs");
               if (nameInputsContainer) {
                 const inputs = Array.from(nameInputsContainer.querySelectorAll("input"));
                 const changedIndices = new Set();
 
-                // 鏍规嵁宸蹭慨鏀圭殑瀛楃鏁伴噺鍚敤/绂佺敤杈撳叆妗?
+                // 根据已修改的字符数量启用/禁用输入框
                 const enforceLimit = () => {
                   const reachedLimit = changedIndices.size >= nameEditConfig.maxEditable;
-                  // 閫愪釜杈撳叆妗嗙粦瀹?IME銆佽緭鍏ャ€佽仛鐒︾瓑浜嬩欢锛屼繚鎸佹牎楠屽噯纭?
+                  // 逐个输入框绑定 IME、输入、聚焦等事件，保持校验准确
                   inputs.forEach((input) => {
                     const index = parseInt(input.dataset.index, 10);
                     if (Number.isNaN(index)) return;
@@ -4911,10 +4910,10 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 鏇存柊瀹惧绛夌骇
-         * @param {number} giftIndex - 绀奸噾绱㈠紩
-         * @param {number} newLevel - 鏂扮瓑绾х储寮?(0-4)
-         * @param {number} oldLevel - 鏃х瓑绾х储寮?(0-4)
+         * 更新宾客等级
+         * @param {number} giftIndex - 礼金索引
+         * @param {number} newLevel - 新等级索引 (0-4)
+         * @param {number} oldLevel - 旧等级索引 (0-4)
          */
         async updateGuestLevel(giftIndex, newLevel, oldLevel) {
           try {
@@ -4926,10 +4925,10 @@ export function bootGiftBookApp() {
             const oldLevelName = CONFIG.GUEST_LEVELS[oldLevel];
             const newLevelName = CONFIG.GUEST_LEVELS[newLevel];
 
-            // 绛夌骇鍙樺寲锛岃褰曞巻鍙诧紝鏇存柊 levelUpdateTime
+            // 等级变化，记录历史，更新 levelUpdateTime
             const historyEntry = {
               timestamp: now,
-              changeLog: `灏嗗瀹㈢瓑绾т粠 "${oldLevelName}" 淇敼涓?"${newLevelName}"`,
+              changeLog: `将宾客等级从 "${oldLevelName}" 修改为 "${newLevelName}"`,
               snapshot: this.giftManager.createSnapshot(currentData),
               type: "levelChange",
             };
@@ -4941,7 +4940,7 @@ export function bootGiftBookApp() {
               history: currentData.history ? [...currentData.history, historyEntry] : [historyEntry],
             };
 
-            // timestamp 鍦?encryptedData 涓紝levelUpdateTime 鍗曠嫭瀛樺偍
+            // timestamp 在 encryptedData 中，levelUpdateTime 单独存储
             const encryptedData = CryptoService.encrypt(updatedData, this.currentPassword);
             await this.giftRepository.updateGift(
               this.giftManager.buildGiftRecordForUpdate(giftObject, {
@@ -4951,7 +4950,7 @@ export function bootGiftBookApp() {
               })
             );
 
-            // 浼樺寲锛氬彧閲嶆柊鎺掑簭鍐呭瓨鏁版嵁锛岄伩鍏嶉噸澶嶆煡璇㈠拰瑙ｅ瘑
+            // 优化：只重新排序内存数据，避免重复查询和解密
             const updatedGiftId = giftObject.id;
             this.gifts[giftIndex].data = updatedData;
             this.gifts[giftIndex].encryptedData = encryptedData;
@@ -4965,29 +4964,29 @@ export function bootGiftBookApp() {
 
             this.ui.closeModal();
             setTimeout(() => this.showGiftDetails(newIndex, { fromStats: false }), 150);
-            this.ui.showNotification(`瀹惧绛夌骇宸叉洿鏂颁负 "${newLevelName}"銆俙, "success");
+            this.ui.showNotification(`宾客等级已更新为 "${newLevelName}"。`, "success");
           } catch (error) {
-            console.error("绛夌骇鏇存柊澶辫触锛岃閲嶈瘯銆?", error);
-            this.ui.showNotification("绛夌骇鏇存柊澶辫触锛岃閲嶈瘯銆?, "error");
+            console.error("等级更新失败，请重试。:", error);
+            this.ui.showNotification("等级更新失败，请重试。", "error");
           }
         }
 
         /**
-         * 缁熶竴鐨勭鐞嗗憳瀵嗙爜鏍￠獙鏂规硶
-         * @param {string} title - 寮圭獥鏍囬
-         * @param {string} message - 鎻愮ず淇℃伅
-         * @param {string} expectedHash - 鏈熸湜鐨勫瘑鐮佸搱甯屽€硷紙鍙€夛紝榛樿浣跨敤褰撳墠浜嬮」锛?
-         * @param {boolean} forceVerify - 鏄惁寮哄埗楠岃瘉锛坱rue 鏃跺繀椤昏緭鍏ュ瘑鐮侊紝涓嶄娇鐢ㄥ厤瀵嗙紦瀛橈級
-         * @returns {Promise<string|null>} 杩斿洖鍘熷瀵嗙爜锛堟垚鍔燂級鎴?null锛堝彇娑?閿欒锛?
+         * 统一的管理员密码校验方法
+         * @param {string} title - 弹窗标题
+         * @param {string} message - 提示信息
+         * @param {string} expectedHash - 期望的密码哈希值（可选，默认使用当前事项）
+         * @param {boolean} forceVerify - 是否强制验证（true 时必须输入密码，不使用免密缓存）
+         * @returns {Promise<string|null>} 返回原始密码（成功）或 null（取消/错误）
          */
         async requestAdminPassword(title, message = "", expectedHash = null, forceVerify = false) {
           const hashToCompare = expectedHash || this.currentEvent.passwordHash;
 
-          // 濡傛灉涓嶅己鍒堕獙璇侊紝灏濊瘯浠庣紦瀛樹腑鑾峰彇瀵嗙爜
+          // 如果不强制验证，尝试从缓存中获取密码
           if (!forceVerify) {
             const cachedPassword = this.getCachedAdminPassword();
             if (cachedPassword && CryptoService.hash(cachedPassword) === hashToCompare) {
-              return cachedPassword; // 鑷姩楠岃瘉閫氳繃
+              return cachedPassword; // 自动验证通过
             }
           }
 
@@ -4995,37 +4994,37 @@ export function bootGiftBookApp() {
             this.ui.elements.modal.classList.remove("modal-large");
             const content = `
                         ${(message && `<p class="text-sm text-gray-600 mb-3">${message}</p>`) || ""}
-                        <input type="password" id="admin-pwd-input" class="w-full p-2 border rounded themed-ring" placeholder="璇疯緭鍏ョ鐞嗗瘑鐮?>
+                        <input type="password" id="admin-pwd-input" class="w-full p-2 border rounded themed-ring" placeholder="请输入管理密码">
                       `;
 
             this.ui.showModal(title, content, [
-              { text: "鍙栨秷", class: "themed-button-secondary border px-4 py-2 rounded", handler: () => resolve(null) },
+              { text: "取消", class: "themed-button-secondary border px-4 py-2 rounded", handler: () => resolve(null) },
               {
-                text: "纭",
+                text: "确认",
                 class: "themed-button-primary px-4 py-2 rounded",
                 handler: () => {
                   const inputPassword = document.getElementById("admin-pwd-input").value;
                   const isCorrect = CryptoService.hash(inputPassword) === hashToCompare;
 
                   if (isCorrect) {
-                    // 濡傛灉鍕鹃€変簡N鍒嗛挓鍏嶅瘑锛屽垯缂撳瓨瀵嗙爜
+                    // 如果勾选了N分钟免密，则缓存密码
                     if (!forceVerify) {
                       const skipVerify = document.getElementById("skip-verify-5min")?.checked;
                       if (skipVerify) {
                         this.cacheAdminPassword(inputPassword, hashToCompare);
                       }
                     }
-                    resolve(inputPassword); // 杩斿洖鍘熷瀵嗙爜
+                    resolve(inputPassword); // 返回原始密码
                   } else {
-                    this.ui.showNotification("瀵嗙爜閿欒锛岃閲嶆柊杈撳叆銆?, "error");
-                    resolve(null); // 瀵嗙爜閿欒
+                    this.ui.showNotification("密码错误，请重新输入。", "error");
+                    resolve(null); // 密码错误
                   }
                 },
               },
             ]);
 
             setTimeout(() => {
-              // 灏嗗閫夋娣诲姞鍒?modal-actions 宸︿晶
+              // 将复选框添加到 modal-actions 左侧
               if (!forceVerify) {
                 const actionsContainer = this.ui.elements.modalActions;
                 const checkboxDiv = document.createElement("div");
@@ -5033,7 +5032,7 @@ export function bootGiftBookApp() {
                 const minutes = CONFIG.PASSWORD_CACHE_DURATION;
                 checkboxDiv.innerHTML = `
                             <input type="checkbox" id="skip-verify-5min" class="w-4 h-4  rounded themed-ring cursor-pointer">
-                            <label for="skip-verify-5min" class="ml-2 text-sm text-gray-600 cursor-pointer select-none whitespace-nowrap">${minutes}鍒嗛挓鍐呬笉鍐嶆牎楠岀鐞嗗瘑鐮?/label>
+                            <label for="skip-verify-5min" class="ml-2 text-sm text-gray-600 cursor-pointer select-none whitespace-nowrap">${minutes}分钟内不再校验管理密码</label>
                           `;
                 actionsContainer.insertBefore(checkboxDiv, actionsContainer.firstChild);
               }
@@ -5043,9 +5042,9 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 缂撳瓨绠＄悊鍛樺瘑鐮?- N 鍒嗛挓鏈夋晥
-         * @param {string} password - 鍘熷瀵嗙爜
-         * @param {string} passwordHash - 瀵嗙爜鍝堝笇鍊硷紙浣滀负鍔犲瘑瀵嗛挜锛?
+         * 缓存管理员密码 - N 分钟有效
+         * @param {string} password - 原始密码
+         * @param {string} passwordHash - 密码哈希值（作为加密密钥）
          */
         cacheAdminPassword(password, passwordHash) {
           if (!this.currentEvent) return;
@@ -5053,8 +5052,8 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 浠庣紦瀛樹腑鑾峰彇绠＄悊鍛樺瘑鐮?
-         * @returns {string|null} 杩斿洖瀵嗙爜鎴?null锛堝鏋滆繃鏈熸垨涓嶅瓨鍦級
+         * 从缓存中获取管理员密码
+         * @returns {string|null} 返回密码或 null（如果过期或不存在）
          */
         getCachedAdminPassword() {
           if (!this.currentEvent) return null;
@@ -5062,22 +5061,22 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 濉厖璇煶鎾姤闊宠壊鍒楄〃
-         * 浠庢祻瑙堝櫒鑾峰彇鍙敤涓枃璇煶骞跺～鍏呬笅鎷夋
-         * 浣跨敤 DocumentFragment 鍑忓皯閲嶇粯
+         * 填充语音播报音色列表
+         * 从浏览器获取可用中文语音并填充下拉框
+         * 使用 DocumentFragment 减少重绘
          */
         populateVoiceList(targetSelect = this.ui.elements.eventVoiceSelect, selectedValue = targetSelect?.value || "") {
           if (!targetSelect) return;
           if (!("speechSynthesis" in window)) {
-            // 濡傛灉涓嶆敮鎸佽闊筹紝鐩存帴娓呯┖鎴栨樉绀洪粯璁わ紝骞堕€€鍑哄嚱鏁伴槻姝㈡姤閿?
-            targetSelect.innerHTML = '<option value="">璁惧涓嶆敮鎸佽闊?/option>';
+            // 如果不支持语音，直接清空或显示默认，并退出函数防止报错
+            targetSelect.innerHTML = '<option value="">设备不支持语音</option>';
             return;
           }
           const voices = speechSynthesis.getVoices().filter((v) => v.lang.startsWith("zh"));
           const fragment = document.createDocumentFragment();
           const defaultOption = document.createElement("option");
           defaultOption.value = "";
-          defaultOption.textContent = "榛樿闊宠壊";
+          defaultOption.textContent = "默认音色";
           fragment.appendChild(defaultOption);
 
           let hasSelectedVoice = false;
@@ -5103,9 +5102,9 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 鍒囨崲澶囨敞棰勮閫夐」
-         * @param {string} preset - 棰勮閿?
-         * @param {HTMLElement} btn - 瑙﹀彂鎸夐挳
+         * 切换备注预设选项
+         * @param {string} preset - 预设键
+         * @param {HTMLElement} btn - 触发按钮
          */
         toggleRemarkPreset(preset, btn) {
           const activeClass = "themed-button-primary";
@@ -5121,13 +5120,13 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 鏇存柊澶囨敞杈撳叆妗?
-         * 鏍规嵁宸查€夐璁惧姩鎬佺敓鎴愯緭鍏ュ瓧娈?
+         * 更新备注输入框
+         * 根据已选预设动态生成输入字段
          */
         updateRemarkInputs() {
           const container = document.getElementById("remark-inputs-container");
 
-          // 淇濆瓨褰撳墠鍊?
+          // 保存当前值
           const currentValues = {};
           container.querySelectorAll("[data-remark-type]").forEach((input) => {
             currentValues[input.dataset.remarkType] = input.value;
@@ -5147,7 +5146,7 @@ export function bootGiftBookApp() {
                         <label class="text-sm font-medium text-gray-700 w-12">${remarkConfig.label}:</label>
                         <input type="text" class="flex-1 p-2 border rounded themed-ring"
                               data-remark-type="${preset}"
-                              placeholder="璇疯緭鍏?{remarkConfig.label}"
+                              placeholder="请输入${remarkConfig.label}"
                               value="${currentValues[preset] || ""}">
                       `;
                 container.appendChild(inputDiv);
@@ -5157,21 +5156,21 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 鏀堕泦澶囨敞鏁版嵁
-         * @param {boolean} isEdit - 鏄惁鍦ㄧ紪杈戞ā寮?
-         * @returns {Object} 澶囨敞瀵硅薄
+         * 收集备注数据
+         * @param {boolean} isEdit - 是否在编辑模式
+         * @returns {Object} 备注对象
          */
         collectRemarkData(isEdit) {
-          // 纭畾鏌ユ壘鐨勮寖鍥?(涓婁笅鏂?
-          // scope涓虹湡锛岃鏄庢槸寮圭獥锛岃寖鍥存槸 #modal-content
-          // 鍚﹀垯璇存槑鏄富鐣岄潰锛岃寖鍥存槸 #add-gift-form (杩欐槸鎮ㄧ殑鎬濊矾)
+          // 确定查找的范围 (上下文)
+          // scope为真，说明是弹窗，范围是 #modal-content
+          // 否则说明是主界面，范围是 #add-gift-form (这是您的思路)
 
           const scope = isEdit ? document.getElementById("modal-content") : this.ui.elements.addGiftForm;
-          // 濡傛灉鎵句笉鍒拌寖鍥达紝鐩存帴杩斿洖绌猴紝澧炲姞浠ｇ爜鍋ュ．鎬?
+          // 如果找不到范围，直接返回空，增加代码健壮性
           if (!scope) return {};
 
           const remarkData = {};
-          // 2. 鍦ㄧ‘瀹氱殑鑼冨洿鍐咃紝鏌ユ壘鎵€鏈夊甫 data-remark-type 灞炴€х殑杈撳叆鍏冪礌
+          // 2. 在确定的范围内，查找所有带 data-remark-type 属性的输入元素
           scope.querySelectorAll("[data-remark-type]").forEach((input) => {
             const type = input.dataset.remarkType;
             const value = input.value.trim();
@@ -5184,27 +5183,27 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 鐢熸垚澶囨敞杈撳叆琛ㄥ崟 HTML
-         * @param {Object|string} remarkData - 澶囨敞鏁版嵁
-         * @returns {string} HTML 瀛楃涓?
+         * 生成备注输入表单 HTML
+         * @param {Object|string} remarkData - 备注数据
+         * @returns {string} HTML 字符串
          */
         generateRemarkInputsHTML(remarkData = {}) {
           const normalized = this.normalizeRemarkData(remarkData);
           return this.REMARK_LABELS.map(({ key, label }) => {
             const value = normalized[key] || "";
-            const placeholder = `璇疯緭鍏?{label}(閫夊～)`;
+            const placeholder = `请输入${label}(选填)`;
 
             if (key === "custom") {
               return `
                         <div class="mt-2">
-                          <label class="font-medium text-gray-700 block mb-1">${label}锛?/label>
+                          <label class="font-medium text-gray-700 block mb-1">${label}：</label>
                           <textarea data-remark-type="${key}" class="w-full p-2 border rounded themed-ring" rows="2" placeholder="${placeholder}">${value}</textarea>
                         </div>
                       `;
             } else {
               return `
                         <div class="flex items-center">
-                          <label class="font-medium text-gray-700 w-12">${label}锛?/label>
+                          <label class="font-medium text-gray-700 w-12">${label}：</label>
                           <input type="text" data-remark-type="${key}" class="flex-1 p-2 border rounded themed-ring" placeholder="${placeholder}" value="${value}">
                         </div>
                       `;
@@ -5213,8 +5212,8 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 瑙勮寖鍖栧娉ㄦ暟鎹?
-         * 鍏煎鏃х増瀛楃涓插娉?
+         * 规范化备注数据
+         * 兼容旧版字符串备注
          * @param {Object|string|null} remarkData
          * @returns {Object}
          */
@@ -5231,9 +5230,9 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 灏嗗娉ㄥ璞¤浆鎹负鏄剧ず鏂囨湰
-         * @param {Object|string} remarkData - 澶囨敞鏁版嵁
-         * @param {string} separator - 鍒嗛殧绗?
+         * 将备注对象转换为显示文本
+         * @param {Object|string} remarkData - 备注数据
+         * @param {string} separator - 分隔符
          * @returns {string}
          */
         formatRemarkDisplay(remarkData, separator = "; ") {
@@ -5244,7 +5243,7 @@ export function bootGiftBookApp() {
           const parts = [];
           this.REMARK_LABELS.forEach(({ key, label }) => {
             if (normalized[key]) {
-              parts.push(`${key !== "custom" ? label + "锛? : ""}${normalized[key]}`);
+              parts.push(`${key !== "custom" ? label + "：" : ""}${normalized[key]}`);
             }
           });
 
@@ -5252,14 +5251,14 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 鏍煎紡鍖栧娉ㄤ俊鎭互鏄剧ず鍦ㄨ鎯呴〉闈?
-         * @param {Object|string} remarkData - 澶囨敞鏁版嵁
-         * @returns {string} HTML 瀛楃涓?
+         * 格式化备注信息以显示在详情页面
+         * @param {Object|string} remarkData - 备注数据
+         * @returns {string} HTML 字符串
          */
         formatRemarkDetailsDisplay(remarkData) {
           const normalized = this.normalizeRemarkData(remarkData);
           if (Object.keys(normalized).length === 0) {
-            return '<p class="text-gray-500">锛堟棤澶囨敞锛?/p>';
+            return '<p class="text-gray-500">（无备注）</p>';
           }
 
           let html = "";
@@ -5270,7 +5269,7 @@ export function bootGiftBookApp() {
               if (key === "custom") {
                 html += `<div class="mb-2">${normalized[key]}</div>`;
               } else {
-                gridItems.push(`<div><span class="text-sm font-bold">${label}锛?/span>${normalized[key]}</div>`);
+                gridItems.push(`<div><span class="text-sm font-bold">${label}：</span>${normalized[key]}</div>`);
               }
             }
           });
@@ -5279,12 +5278,12 @@ export function bootGiftBookApp() {
             html += `<div class="grid grid-cols-2 gap-2">${gridItems.join("")}</div>`;
           }
 
-          return html || '<p class="text-gray-500">锛堟棤澶囨敞锛?/p>';
+          return html || '<p class="text-gray-500">（无备注）</p>';
         }
 
         /**
-         * 妫€鏌ユ槸鍚﹀瓨鍦ㄥ娉?
-         * @param {Object} giftData - 绀奸噾鏁版嵁瀵硅薄
+         * 检查是否存在备注
+         * @param {Object} giftData - 礼金数据对象
          * @returns {boolean}
          */
         hasRemarkData(giftData) {
@@ -5293,40 +5292,40 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 閲嶇疆澶囨敞棰勮閫夐」鍒伴粯璁ょ姸鎬?
+         * 重置备注预设选项到默认状态
          */
         resetRemarkPresets() {
           this.selectedRemarkPresets.clear();
 
-          // 2. 绉婚櫎鎵€鏈夋寜閽殑楂樹寒鐘舵€?
+          // 2. 移除所有按钮的高亮状态
           document.querySelectorAll(".remark-preset-btn").forEach((btn) => {
             btn.classList.remove("themed-button-primary");
             btn.classList.add("themed-button-secondary");
           });
 
-          // 3. 娓呯┖鍥哄畾鐨勮嚜瀹氫箟澶囨敞杈撳叆妗?
+          // 3. 清空固定的自定义备注输入框
           const customInput = document.getElementById("guest-remark-custom");
           if (customInput) {
             customInput.value = "";
           }
 
-          // 4. 鏇存柊锛堟竻绌猴級鍔ㄦ€佽緭鍏ユ鍖哄煙
+          // 4. 更新（清空）动态输入框区域
           this.updateRemarkInputs();
         }
 
         /**
-         * 棰勮璇煶闊宠壊
-         * @param {HTMLSelectElement} selectElement - 璇煶閫夋嫨鍣?
+         * 预览语音音色
+         * @param {HTMLSelectElement} selectElement - 语音选择器
          */
         previewSelectedVoice(selectElement) {
           if (!("speechSynthesis" in window)) {
-            this.ui.showNotification("褰撳墠娴忚鍣ㄤ笉鏀寔璇煶鎾姤鍔熻兘銆?, "error");
+            this.ui.showNotification("当前浏览器不支持语音播报功能。", "error");
             return;
           }
 
           speechSynthesis.cancel();
           const selectedVoiceName = selectElement.value;
-          const utterance = new SpeechSynthesisUtterance("寮犱笁璐虹ぜ浜旂櫨鍏冩暣");
+          const utterance = new SpeechSynthesisUtterance("张三贺礼五百元整");
           utterance.lang = "zh-CN";
 
           if (selectedVoiceName) {
@@ -5339,25 +5338,25 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 璇煶鎾姤绀奸噾淇℃伅
-         * 浣跨敤娴忚鍣?Web Speech API 鎾姤绀奸噾璁板綍
-         * @param {string} name - 瀹汉濮撳悕
-         * @param {number} amount - 绀奸噾閲戦
+         * 语音播报礼金信息
+         * 使用浏览器 Web Speech API 播报礼金记录
+         * @param {string} name - 客人姓名
+         * @param {number} amount - 礼金金额
          *
-         * 鎾姤瑙勫垯锛?
-         * - 灏忎簬璧锋姤閲戦涓嶆挱鎶?
-         * - 鍠滀簨锛氣€滃鍚?璐虹ぜ 閲戦鈥?
-         * - 鐧戒簨锛氣€滃鍚嶏紝閲戦鈥?
+         * 播报规则：
+         * - 小于起报金额不播报
+         * - 喜事：“姓名 贺礼 金额”
+         * - 白事：“姓名，金额”
          */
         speakGift(name, amount) {
           if (!this.isSpeechEnabled || !("speechSynthesis" in window)) return;
 
-          // 璧锋姤閲戦锛氬皬浜庨槇鍊煎垯涓嶆挱鎶?
+          // 起报金额：小于阈值则不播报
           const minAmount = parseFloat(this.currentEvent?.minSpeechAmount || 0) || 0;
           if (typeof amount === "number" && amount < minAmount) return;
 
-          const ttsText = Utils.amountToChinese(amount).replace(/闄?g, "鍏?);
-          const textToSpeak = this.currentEvent.theme === "theme-solemn" ? `${name}锛?{ttsText}` : `${name} 璐虹ぜ ${ttsText}`;
+          const ttsText = Utils.amountToChinese(amount).replace(/陆/g, "六");
+          const textToSpeak = this.currentEvent.theme === "theme-solemn" ? `${name}，${ttsText}` : `${name} 贺礼 ${ttsText}`;
 
           const utterance = new SpeechSynthesisUtterance(textToSpeak);
           utterance.lang = "zh-CN";
@@ -5372,7 +5371,7 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 鏄剧ず浜嬮」璁剧疆瀵硅瘽妗?
+         * 显示事项设置对话框
          */
         async showEditEventInfoModal() {
           this.ui.elements.modal.classList.add("modal-large");
@@ -5384,41 +5383,41 @@ export function bootGiftBookApp() {
       <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-left">
         <div class="space-y-4">
           <div>
-            <label for="edit-event-name-input" class="block text-sm font-medium text-gray-700">浜嬮」鍚嶇О</label>
+            <label for="edit-event-name-input" class="block text-sm font-medium text-gray-700">事项名称</label>
             <input type="text" id="edit-event-name-input" class="w-full mt-1 p-2 border rounded themed-ring" value="${this.currentEvent.name || ""}">
           </div>
 
           <div>
-            <label for="edit-event-voice" class="block text-sm font-medium text-gray-700">璇煶鎾姤闊宠壊</label>
+            <label for="edit-event-voice" class="block text-sm font-medium text-gray-700">语音播报音色</label>
             <div class="flex items-center gap-2 mt-1">
               <select id="edit-event-voice" class="text-sm flex-grow w-full p-2 border rounded themed-ring">
-                <option value="">榛樿闊宠壊</option>
+                <option value="">默认音色</option>
               </select>
-              <button type="button" id="preview-edit-voice-btn" class="themed-button-secondary border p-2 rounded whitespace-nowrap text-xs"><i class="ri-volume-up-line"></i> 棰勮</button>
+              <button type="button" id="preview-edit-voice-btn" class="themed-button-secondary border p-2 rounded whitespace-nowrap text-xs"><i class="ri-volume-up-line"></i> 预览</button>
             </div>
           </div>
 
           <div>
-            <label for="edit-min-speech-amount" class="block text-sm font-medium text-gray-700">璇煶鎾姤璧锋姤閲戦 (鍏?</label>
+            <label for="edit-min-speech-amount" class="block text-sm font-medium text-gray-700">语音播报起报金额 (元)</label>
             <input type="number" id="edit-min-speech-amount" min="0" step="1" class="w-full mt-1 p-2 border rounded themed-ring" value="${this.currentEvent.minSpeechAmount || 0}">
-            <p class="text-xs text-gray-500 mt-1">鍙湁澶т簬鎴栫瓑浜庢閲戦鐨勭ぜ閲戞墠浼氳鎾姤銆傝缃负0鍒欏叏閮ㄦ挱鎶ャ€?/p>
+            <p class="text-xs text-gray-500 mt-1">只有大于或等于此金额的礼金才会被播报。设置为0则全部播报。</p>
           </div>
           <div>
-            <label for="edit-event-recorder" class="block text-sm font-medium text-gray-700">璁拌处浜?/label>
+            <label for="edit-event-recorder" class="block text-sm font-medium text-gray-700">记账人</label>
             <input type="text" id="edit-event-recorder" class="w-full mt-1 p-2 border rounded themed-ring" value="${this.currentEvent.recorder || ""}">
           </div>
           <div>
           <label class="flex items-center cursor-pointer">
             <input type="checkbox" id="edit-hide-privacy" class="w-4 h-4 themed-ring rounded mr-2" ${this.currentEvent.hidePrivacy ? "checked" : ""}>
-            <span class="text-sm font-medium text-gray-700">鍓睆淇℃伅鑴辨晱鏄剧ず</span>
+            <span class="text-sm font-medium text-gray-700">副屏信息脱敏显示</span>
           </label>
-          <p class="text-xs text-gray-500 mt-1">寮€鍚悗锛屽壇灞忎粎鏄剧ず鏈€鏂板綍鍏ヨ褰曠殑瀹屾暣濮撳悕锛屽叾浠栬褰曡劚鏁忔樉绀恒€?/p>
+          <p class="text-xs text-gray-500 mt-1">开启后，副屏仅显示最新录入记录的完整姓名，其他记录脱敏显示。</p>
         </div>
         </div>
 
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700">浜嬮」寮€濮嬫椂闂?/label>
+            <label class="block text-sm font-medium text-gray-700">事项开始时间</label>
             <div class="flex gap-2 mt-1">
               <input type="date" id="edit-start-date" required class="w-full p-2 border rounded themed-ring" value="${startDate || ""}">
               <input type="time" id="edit-start-time" required class="w-full p-2 border rounded themed-ring" value="${startTime || ""}">
@@ -5426,41 +5425,41 @@ export function bootGiftBookApp() {
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700">浜嬮」缁撴潫鏃堕棿</label>
+            <label class="block text-sm font-medium text-gray-700">事项结束时间</label>
             <div class="flex gap-2 mt-1">
               <input type="date" id="edit-end-date" required class="w-full p-2 border rounded themed-ring" value="${endDate || ""}">
               <input type="time" id="edit-end-time" required class="w-full p-2 border rounded themed-ring" value="${endTime || ""}">
             </div>
           </div>
 
-          <!-- 浠呬繚鐣?PDF 寮曟搸閫夋嫨锛屽洜涓鸿繖灞炰簬鎶€鏈厤缃€岄潪鏍峰紡 -->
+          <!-- 仅保留 PDF 引擎选择，因为这属于技术配置而非样式 -->
           <div class="mt-4 pt-4">
-              <span class="block text-sm font-medium text-gray-700">PDF娓叉煋鏂瑰紡</span>
+              <span class="block text-sm font-medium text-gray-700">PDF渲染方式</span>
               <div class="space-y-2 text-sm text-gray-700 mt-2">
                 <label class="flex items-center gap-2 cursor-pointer">
                   <input type="radio" name="edit-pdf-engine" value="browser" class="themed-text-radio themed-ring">
-                  <span>娴忚鍣ㄥ彟瀛樹负PDF锛堟枃浠跺皬,涓嶅吋瀹圭Щ鍔ㄧ锛?/span>
+                  <span>浏览器另存为PDF（文件小,不兼容移动端）</span>
                 </label>
                 <label class="flex items-center gap-2 cursor-pointer">
                   <input type="radio" name="edit-pdf-engine" value="pdf-lib" class="themed-text-radio themed-ring">
-                  <span>PDF-LIB.JS寮曟搸锛堟枃浠剁◢澶?鍏煎PC/绉诲姩绔級</span>
+                  <span>PDF-LIB.JS引擎（文件稍大,兼容PC/移动端）</span>
                 </label>
-                <p class="text-xs text-gray-500">娴忚鍣ㄥ彟瀛樹负PDF鏂囦欢杈冨皬锛屼笉鍏煎绉诲姩绔紝PDF-LIB.JS鐢熸垚鐨刾df鏂囦欢绋嶅ぇ,鏀寔澶氬钩鍙?/p>
+                <p class="text-xs text-gray-500">浏览器另存为PDF文件较小，不兼容移动端，PDF-LIB.JS生成的pdf文件稍大,支持多平台</p>
               </div>
           </div>
         </div>
       </div>`;
 
-          this.ui.showModal("璁剧疆浜嬮」", content, [
+          this.ui.showModal("设置事项", content, [
             {
-              text: "绀肩翱鏍峰紡璁剧疆",
+              text: "礼簿样式设置",
               class: "border px-4 py-2 rounded themed-button-secondary  mr-auto",
               keepOpen: true,
               handler: () => this.showGiftBookStyleModal(),
             },
-            { text: "鍙栨秷", class: "themed-button-secondary border px-4 py-2 rounded" },
+            { text: "取消", class: "themed-button-secondary border px-4 py-2 rounded" },
             {
-              text: "淇濆瓨",
+              text: "保存",
               class: "themed-button-primary px-4 py-2 rounded",
               keepOpen: true,
               handler: async () => {
@@ -5473,25 +5472,25 @@ export function bootGiftBookApp() {
                 const hidePrivacy = document.getElementById("edit-hide-privacy").checked;
                 const pdfEngineSelection = document.querySelector('input[name="edit-pdf-engine"]:checked')?.value || "browser";
 
-                // 鍩虹楠岃瘉
+                // 基础验证
                 if (!newName) {
-                  this.ui.showNotification("浜嬮」鍚嶇О涓嶈兘涓虹┖銆?, "error");
+                  this.ui.showNotification("事项名称不能为空。", "error");
                   return;
                 }
                 if (new Date(newStartDateTime) >= new Date(newEndDateTime)) {
-                  this.ui.showNotification("寮€濮嬫椂闂村繀椤绘棭浜庣粨鏉熸椂闂淬€?, "error");
+                  this.ui.showNotification("开始时间必须早于结束时间。", "error");
                   return;
                 }
 
-                // 鏃ユ湡鍙樺姩楠岃瘉瀵嗙爜
+                // 日期变动验证密码
                 const originalStartDateTime = this.currentEvent.startDateTime;
                 const originalEndDateTime = this.currentEvent.endDateTime;
                 const datesChanged = newStartDateTime !== originalStartDateTime || newEndDateTime !== originalEndDateTime;
 
                 if (datesChanged) {
-                  const password = await this.requestAdminPassword("瀵嗙爜楠岃瘉", "淇敼浜嬮」鐨勮捣姝㈡棩鏈燂紝璇疯緭鍏ョ鐞嗗瘑鐮佷互纭銆?, null, true);
+                  const password = await this.requestAdminPassword("密码验证", "修改事项的起止日期，请输入管理密码以确认。", null, true);
                   if (!password) {
-                    this.ui.showNotification("宸插彇娑堥獙璇侊紝淇敼鏈繚瀛樸€?, "info");
+                    this.ui.showNotification("已取消验证，修改未保存。", "info");
                     return;
                   }
                 }
@@ -5519,17 +5518,17 @@ export function bootGiftBookApp() {
                   this.currentEvent = updatedEvent;
                   this.ui.elements.currentEventTitleEl.textContent = newName;
 
-                  // 閲嶆柊搴旂敤鏍峰紡浠ラ槻涓囦竴
+                  // 重新应用样式以防万一
                   await this.applyCustomGiftBookStyle();
 
                   this.session.save(this.currentEvent, this.currentPassword);
 
                   this.ui.closeModal();
-                  this.ui.showNotification("浜嬮」璁剧疆鏇存柊鎴愬姛銆?, "success");
+                  this.ui.showNotification("事项设置更新成功。", "success");
                   this.guestScreenService.syncToGuestScreen();
                 } catch (error) {
                   console.error(error);
-                  this.ui.showNotification("浜嬮」璁剧疆淇濆瓨澶辫触锛岃閲嶈瘯銆?, "error");
+                  this.ui.showNotification("事项设置保存失败，请重试。", "error");
                 }
               },
             },
@@ -5543,7 +5542,7 @@ export function bootGiftBookApp() {
               this.previewSelectedVoice(voiceSelectElement);
             });
 
-            // 璁剧疆 PDF 寮曟搸鍗曢€夋鐘舵€?
+            // 设置 PDF 引擎单选框状态
             const pdfEngineRadio = document.querySelector(`input[name="edit-pdf-engine"][value="${this.currentEvent.printOptions?.pdfEngine || "browser"}"]`);
             if (pdfEngineRadio) {
               pdfEngineRadio.checked = true;
@@ -5552,17 +5551,17 @@ export function bootGiftBookApp() {
         }
 
         /**
-         * 鍒犻櫎褰撳墠浜嬮」
-         * 寮哄埗瑕佹眰瀵煎嚭澶囦唤骞堕獙璇佺鐞嗗憳瀵嗙爜
+         * 删除当前事项
+         * 强制要求导出备份并验证管理员密码
          */
         async deleteCurrentEvent() {
           if (!this.currentEvent) return;
 
           if (this.gifts.length === 0) {
             const password = await this.requestAdminPassword(
-              "鍒犻櫎纭",
-              `<p>姝ゆ搷浣滃皢姘镐箙鍒犻櫎浜嬮」 \"<strong>${this.currentEvent.name}</strong>\"锛屾棤娉曟仮澶嶃€?/p>
-                      <p class=\"mt-4\">璇疯緭鍏ョ鐞嗗瘑鐮佷互纭锛?/p>`,
+              "删除确认",
+              `<p>此操作将永久删除事项 \"<strong>${this.currentEvent.name}</strong>\"，无法恢复。</p>
+                      <p class=\"mt-4\">请输入管理密码以确认：</p>`,
               null
             );
 
@@ -5572,7 +5571,7 @@ export function bootGiftBookApp() {
               await this.giftRepository.deleteEvent(this.currentEvent.id);
               this.session.clear();
               this.passwordCache.clear(this.currentEvent.id);
-              this.ui.showNotification(`浜嬮」 "${this.currentEvent.name}" 宸茶鎴愬姛鍒犻櫎銆俙, "success");
+              this.ui.showNotification(`事项 "${this.currentEvent.name}" 已被成功删除。`, "success");
 
               setTimeout(() => {
                 this.currentEvent = null;
@@ -5582,23 +5581,23 @@ export function bootGiftBookApp() {
                 this.loadEvents();
               }, 500);
             } catch (error) {
-              console.error("鍒犻櫎浜嬮」鏃跺彂鐢熼敊璇?", error);
-              this.ui.showNotification("鍒犻櫎澶辫触锛岃閲嶈瘯銆?, "error");
+              console.error("删除事项时发生错误:", error);
+              this.ui.showNotification("删除失败，请重试。", "error");
             }
             return;
           }
 
           const content = `
                          <div class="text-left space-y-3">
-                           <p class="font-semibold text-gray-800">涓轰簡纭繚鎮ㄧ殑鏁版嵁瀹夊叏锛屽垹闄や簨椤瑰墠蹇呴』鍏堝鍑篍xcel澶囦唤銆?/p>
+                           <p class="font-semibold text-gray-800">为了确保您的数据安全，删除事项前必须先导出Excel备份。</p>
                            <ol class="list-decimal pl-5 text-sm text-gray-700 space-y-1">
-                             <li>鐐瑰嚮涓嬫柟鈥滃鍑篍xcel澶囦唤鈥濇寜閽紝涓嬭浇骞朵繚瀛樺埌鎮ㄧ殑鐢佃剳銆?/li>
-                             <li>纭宸叉垚鍔熷鍑哄悗锛屽嬀閫夆€滄垜宸叉垚鍔熷鍑篍xcel澶囦唤鈥濄€?/li>
-                             <li>绯荤粺浼氳姹傝緭鍏ョ鐞嗗瘑鐮佸悗鎵嶄細鎵ц鍒犻櫎銆?/li>
+                             <li>点击下方“导出Excel备份”按钮，下载并保存到您的电脑。</li>
+                             <li>确认已成功导出后，勾选“我已成功导出Excel备份”。</li>
+                             <li>系统会要求输入管理密码后才会执行删除。</li>
                            </ol>
                            <label class="flex items-center mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100">
                              <input id="confirm-exported" type="checkbox" class="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded">
-                             <span class="ml-3 text-sm font-medium text-gray-900">鎴戝凡鎴愬姛瀵煎嚭Excel澶囦唤</span>
+                             <span class="ml-3 text-sm font-medium text-gray-900">我已成功导出Excel备份</span>
                            </label>
                          </div>
                        `;
@@ -5610,7 +5609,7 @@ export function bootGiftBookApp() {
             if (continueBtn && checkbox) {
               const shouldEnable = hasExported && checkbox.checked;
               continueBtn.disabled = !shouldEnable;
-              // 娣诲姞绂佺敤鏍峰紡
+              // 添加禁用样式
               if (!shouldEnable) {
                 continueBtn.classList.add("opacity-50", "cursor-not-allowed");
               } else {
@@ -5619,14 +5618,14 @@ export function bootGiftBookApp() {
             }
           };
 
-          this.ui.showModal("鍒犻櫎浜嬮」", content, [
+          this.ui.showModal("删除事项", content, [
             {
-              text: "鍏抽棴",
+              text: "关闭",
               class: "themed-button-secondary border px-4 py-2 rounded",
               role: "secondary",
             },
             {
-              text: "瀵煎嚭Excel澶囦唤",
+              text: "导出Excel备份",
               class: "themed-button-secondary border px-4 py-2 rounded",
               id: "btn-export-excel",
               handler: () => {
@@ -5637,17 +5636,17 @@ export function bootGiftBookApp() {
               keepOpen: true,
             },
             {
-              text: "宸插鍑猴紝缁х画鍒犻櫎",
+              text: "已导出，继续删除",
               class: "themed-button-primary px-4 py-2 rounded",
               id: "btn-continue-delete",
               role: "primary",
               handler: async () => {
                 const checkbox = document.getElementById("confirm-exported");
                 if (!hasExported || !checkbox || !checkbox.checked) {
-                  this.ui.showNotification("璇峰厛瀵煎嚭 Excel锛屽苟鍕鹃€夌‘璁ゅ悗鍐嶇户缁€?, "error");
+                  this.ui.showNotification("请先导出 Excel，并勾选确认后再继续。", "error");
                   return;
                 }
-                const password = await this.requestAdminPassword("鍒犻櫎纭", `姝ゆ搷浣滃皢姘镐箙鍒犻櫎浜嬮」 \"<strong>${this.currentEvent.name}</strong>\" 鍙婂叾鎵€鏈夌ぜ閲戣褰曪紝涓旀棤娉曟仮澶嶃€傝杈撳叆绠＄悊瀵嗙爜浠ョ‘璁ゃ€俙, null, true);
+                const password = await this.requestAdminPassword("删除确认", `此操作将永久删除事项 \"<strong>${this.currentEvent.name}</strong>\" 及其所有礼金记录，且无法恢复。请输入管理密码以确认。`, null, true);
                 if (password === null) return;
 
                 try {
@@ -5660,7 +5659,7 @@ export function bootGiftBookApp() {
 
                   this.session.clear();
                   this.passwordCache.clear(eventId);
-                  this.ui.showNotification(`浜嬮」 "${this.currentEvent.name}" 宸茶鎴愬姛鍒犻櫎銆俙, "success");
+                  this.ui.showNotification(`事项 "${this.currentEvent.name}" 已被成功删除。`, "success");
 
                   setTimeout(() => {
                     this.currentEvent = null;
@@ -5670,8 +5669,8 @@ export function bootGiftBookApp() {
                     this.loadEvents();
                   }, 500);
                 } catch (error) {
-                  console.error("鍒犻櫎浜嬮」鏃跺彂鐢熼敊璇?", error);
-                  this.ui.showNotification("鍒犻櫎澶辫触锛岃閲嶈瘯銆?, "error");
+                  console.error("删除事项时发生错误:", error);
+                  this.ui.showNotification("删除失败，请重试。", "error");
                 }
               },
               keepOpen: true,
@@ -5702,40 +5701,40 @@ export function bootGiftBookApp() {
         static CACHE_NAME = "giftbook-assets-v1";
 
         /**
-         * 鑾峰彇浜嬮」灏侀潰鐨?Cache Key
+         * 获取事项封面的 Cache Key
          */
         static getCoverKey(eventId) {
           return `/event-cover-${eventId}`;
         }
 
         /**
-         * 鑾峰彇浜嬮」鑳屾櫙鍥剧殑 Cache Key
+         * 获取事项背景图的 Cache Key
          */
         static getBackgroundKey(eventId) {
           return `/event-background-${eventId}`;
         }
 
         /**
-         * 閫氱敤淇濆瓨鏂规硶 (甯﹀ぇ灏忛檺鍒?
-         * @param {string} key - 缂撳瓨閿?
-         * @param {File|Blob} file - 鏂囦欢瀵硅薄
-         * @returns {Promise<boolean>} 鏄惁淇濆瓨鎴愬姛
+         * 通用保存方法 (带大小限制)
+         * @param {string} key - 缓存键
+         * @param {File|Blob} file - 文件对象
+         * @returns {Promise<boolean>} 是否保存成功
          */
         static async save(key, file) {
           if (!("caches" in window)) return false;
 
-          // 纭繚 CONFIG.MAX_COVER_SIZE 宸插畾涔?(榛樿涓?2MB)
+          // 确保 CONFIG.MAX_COVER_SIZE 已定义 (默认为 2MB)
           const maxSize = typeof CONFIG !== "undefined" && CONFIG.MAX_COVER_SIZE ? CONFIG.MAX_COVER_SIZE : 2 * 1024 * 1024;
 
           if (file.size > maxSize) {
-            console.warn(`鍥剧墖杩囧ぇ: ${(file.size / 1024 / 1024).toFixed(2)}MB, 闄愬埗: ${(maxSize / 1024 / 1024).toFixed(2)}MB`);
+            console.warn(`图片过大: ${(file.size / 1024 / 1024).toFixed(2)}MB, 限制: ${(maxSize / 1024 / 1024).toFixed(2)}MB`);
             return false;
           }
 
           try {
             const cache = await caches.open(this.CACHE_NAME);
 
-            // 鏋勯€犲搷搴斿璞″瓨鍏?Cache
+            // 构造响应对象存入 Cache
             await cache.put(
               key,
               new Response(file, {
@@ -5747,14 +5746,14 @@ export function bootGiftBookApp() {
             );
             return true;
           } catch (e) {
-            console.warn("Cache API 淇濆瓨澶辫触", e);
+            console.warn("Cache API 保存失败", e);
             return false;
           }
         }
 
         /**
-         * 閫氱敤璇诲彇鏂规硶 (杩斿洖 Blob URL)
-         * @param {string} key - 缂撳瓨閿?
+         * 通用读取方法 (返回 Blob URL)
+         * @param {string} key - 缓存键
          */
         static async getUrl(key) {
           if (!("caches" in window)) return null;
@@ -5765,13 +5764,13 @@ export function bootGiftBookApp() {
             const blob = await response.blob();
             return URL.createObjectURL(blob);
           } catch (e) {
-            console.error("璇诲彇缂撳瓨鍥剧墖澶辫触", e);
+            console.error("读取缓存图片失败", e);
             return null;
           }
         }
 
         /**
-         * 閫氱敤鍒犻櫎鏂规硶
+         * 通用删除方法
          */
         static async delete(key) {
           if ("caches" in window) {
@@ -5780,7 +5779,7 @@ export function bootGiftBookApp() {
           }
         }
 
-        // --- 蹇嵎涓氬姟鏂规硶 ---
+        // --- 快捷业务方法 ---
 
         static async saveBackground(eventId, file) {
           this.deleteBackground(eventId);
@@ -5813,16 +5812,16 @@ export function bootGiftBookApp() {
       app
         .init()
         .then(() => {
-          console.log("绀肩翱绯荤粺涓撲笟鐗堝姞杞芥垚鍔燂紒");
-          console.log("绯荤粺鏋舵瀯: 绫诲寲銆佹ā鍧楀寲銆佺幇浠ｅ寲");
-          console.log("鏁版嵁鍔犲瘑: AES-256");
-          console.log("鏁版嵁瀛樺偍: IndexedDB");
+          console.log("礼簿系统专业版加载成功！");
+          console.log("系统架构: 类化、模块化、现代化");
+          console.log("数据加密: AES-256");
+          console.log("数据存储: IndexedDB");
         })
         .catch((error) => {
-          console.error("? 绯荤粺鍚姩澶辫触:", error);
+          console.error("? 系统启动失败:", error);
         });
 
-      // 璇煶鍒楄〃鏇存柊
+      // 语音列表更新
       if ("speechSynthesis" in window && window.speechSynthesis && speechSynthesis.onvoiceschanged !== undefined) {
         speechSynthesis.onvoiceschanged = () => {
           app.populateVoiceList();
@@ -5832,6 +5831,4 @@ export function bootGiftBookApp() {
           }
         };
       }
-    
-  return app;
 }
