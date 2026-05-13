@@ -1,9 +1,10 @@
-﻿/* eslint-disable */
+/* eslint-disable */
 // @ts-nocheck
+// 从 guest-screen.html 自动提取，勿手工编辑源码
 export function bootGuestScreen() {
 
       /**
-       * 绠€鏄撶紦瀛樼鐞嗗櫒
+       * 简易缓存管理器
        */
       const CacheManager = {
         CACHE_NAME: "guest-screen-qr-cache",
@@ -34,7 +35,7 @@ export function bootGuestScreen() {
           }
         },
 
-        // 鏂板: 鍒犻櫎鍥剧墖缂撳瓨
+        // 新增: 删除图片缓存
         async deleteImage(key) {
           try {
             const cache = await caches.open(this.CACHE_NAME);
@@ -67,7 +68,7 @@ export function bootGuestScreen() {
         },
       };
 
-      // 宸ュ叿鍑芥暟锛氶殣钘忓鍚?
+      // 工具函数：隐藏姓名
       function maskName(name, hidePrivacy, isLatest) {
         if (!hidePrivacy || isLatest) {
           return name;
@@ -79,7 +80,7 @@ export function bootGuestScreen() {
         return name.substring(0, 2) + "**";
       }
 
-      // 鍓睆鐘舵€佺鐞?
+      // 副屏状态管理
       class GuestScreen {
         constructor() {
           this.currentData = null;
@@ -112,7 +113,7 @@ export function bootGuestScreen() {
 
           this.pendingAlipayFile = null;
           this.pendingWechatFile = null;
-          // 鏂板: 鏍囪鏄惁娓呯┖
+          // 新增: 标记是否清空
           this.alipayCleared = false;
           this.wechatCleared = false;
         }
@@ -162,7 +163,7 @@ export function bootGuestScreen() {
           if (!data) return;
           this.currentData = data;
           document.body.className = data.theme || "theme-festive";
-          this.eventTitle.textContent = data.eventName || "绀肩翱";
+          this.eventTitle.textContent = data.eventName || "礼簿";
           this.renderGiftBook(data);
           this.appContainer.classList.remove("hidden");
         }
@@ -194,7 +195,7 @@ export function bootGuestScreen() {
             nameRow.appendChild(nameCell);
             const typeCell = document.createElement("div");
             typeCell.className = "book-cell type-cell";
-            typeCell.textContent = typeText || "璐虹ぜ";
+            typeCell.textContent = typeText || "贺礼";
             typeRow.appendChild(typeCell);
             const amountCell = document.createElement("div");
             amountCell.className = "book-cell amount-cell";
@@ -202,7 +203,7 @@ export function bootGuestScreen() {
               const amountChinese = gift.amountChinese;
               amountCell.innerHTML = `
                 <div class="amount-chinese ${amountChinese.length > 16 ? "scale" : ""}">${amountChinese}</div>
-                <div class="amount-numeric ${Math.abs(gift.amount).toString().length > 8 ? "scale" : ""}">锟?{gift.amount}</div>
+                <div class="amount-numeric ${Math.abs(gift.amount).toString().length > 8 ? "scale" : ""}">￥${gift.amount}</div>
               `;
               if (gift.id === latestGiftId) amountCell.classList.add("latest-entry");
             }
@@ -253,8 +254,8 @@ export function bootGuestScreen() {
         async showSettingsModal() {
           this.pendingAlipayFile = null;
           this.pendingWechatFile = null;
-          this.alipayCleared = false; // 閲嶇疆鐘舵€?
-          this.wechatCleared = false; // 閲嶇疆鐘舵€?
+          this.alipayCleared = false; // 重置状态
+          this.wechatCleared = false; // 重置状态
 
           const settings = CacheManager.getSettings();
           const currentLayout = settings.layout || "hidden";
@@ -265,23 +266,23 @@ export function bootGuestScreen() {
           const alipaySrc = alipayBlob ? URL.createObjectURL(alipayBlob) : "";
           const wechatSrc = wechatBlob ? URL.createObjectURL(wechatBlob) : "";
 
-          this.modalTitle.textContent = "鍓睆鏄剧ず璁剧疆";
+          this.modalTitle.textContent = "副屏显示设置";
           this.modalContent.innerHTML = `
             <div class="space-y-6 text-left">
               <div>
-                <label class="block text-sm font-medium text-gray-700">鏄剧ず鏀舵鐮?/label>
+                <label class="block text-sm font-medium text-gray-700">显示收款码</label>
                 <div class="flex space-x-4 mt-2">
                   <label class="flex items-center space-x-2 cursor-pointer">
                     <input type="radio" name="layout-position" value="hidden" class="themed-text-radio themed-ring" ${currentLayout === "hidden" ? "checked" : ""}>
-                    <span>涓嶆樉绀?/span>
+                    <span>不显示</span>
                   </label>
                   <label class="flex items-center space-x-2 cursor-pointer">
                     <input type="radio" name="layout-position" value="left" class="themed-text-radio themed-ring" ${currentLayout === "left" ? "checked" : ""}>
-                    <span>宸︿晶鏄剧ず</span>
+                    <span>左侧显示</span>
                   </label>
                   <label class="flex items-center space-x-2 cursor-pointer">
                     <input type="radio" name="layout-position" value="right" class="themed-text-radio themed-ring" ${currentLayout === "right" ? "checked" : ""}>
-                    <span>鍙充晶鏄剧ず</span>
+                    <span>右侧显示</span>
                   </label>
                 </div>
               </div>
@@ -289,16 +290,16 @@ export function bootGuestScreen() {
               <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
                 <div class="flex-1">
                   <div class="flex justify-between items-center mb-1">
-                    <label class="block text-sm font-medium text-gray-700">鏀粯瀹?鏀舵鐮?/label>
-                    <button id="alipay-clear-btn" class="text-xs text-red-600 hover:underline ${alipaySrc ? "" : "hidden"}">娓呯┖</button>
+                    <label class="block text-sm font-medium text-gray-700">支付宝 收款码</label>
+                    <button id="alipay-clear-btn" class="text-xs text-red-600 hover:underline ${alipaySrc ? "" : "hidden"}">清空</button>
                   </div>
                   <input type="file" id="alipay-upload" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300">
                   <img id="alipay-preview" src="${alipaySrc}" class="mt-2 rounded-lg ${alipaySrc ? "" : "hidden"} max-w-full h-auto max-h-32 object-contain border p-1 bg-white">
                 </div>
                 <div class="flex-1">
                   <div class="flex justify-between items-center mb-1">
-                    <label class="block text-sm font-medium text-gray-700">寰俊 鏀舵鐮?/label>
-                    <button id="wechat-clear-btn" class="text-xs text-red-600 hover:underline ${wechatSrc ? "" : "hidden"}">娓呯┖</button>
+                    <label class="block text-sm font-medium text-gray-700">微信 收款码</label>
+                    <button id="wechat-clear-btn" class="text-xs text-red-600 hover:underline ${wechatSrc ? "" : "hidden"}">清空</button>
                   </div>
                   <input type="file" id="wechat-upload" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300">
                   <img id="wechat-preview" src="${wechatSrc}" class="mt-2 rounded-lg ${wechatSrc ? "" : "hidden"} max-w-full h-auto max-h-32 object-contain border p-1 bg-white">
@@ -306,19 +307,19 @@ export function bootGuestScreen() {
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-gray-700">鑷畾涔夋枃瀛?/label>
+                <label class="block text-sm font-medium text-gray-700">自定义文字</label>
                 <div id="pell-editor-container" class="mt-1"></div>
               </div>
             </div>
           `;
 
           this.modalActions.innerHTML = `
-            <button id="modal-cancel-btn" class="themed-button-secondary">鍙栨秷</button>
-            <button id="modal-save-btn" class="themed-button-primary">淇濆瓨璁剧疆</button>
+            <button id="modal-cancel-btn" class="themed-button-secondary">取消</button>
+            <button id="modal-save-btn" class="themed-button-primary">保存设置</button>
           `;
 
           if (!window.pell) {
-            console.error("Pell.js 鏈姞杞?");
+            console.error("Pell.js 未加载!");
             return;
           }
 
@@ -328,9 +329,9 @@ export function bootGuestScreen() {
             defaultParagraphSeparator: "div",
             styleWithCSS: false,
             actions: [
-              { icon: '<i class="ri-bold" title="鍔犵矖"></i>', title: "Bold", result: () => window.pell.exec("bold") },
-              { icon: '<i class="ri-italic" title="鏂滀綋"></i>', title: "Italic", result: () => window.pell.exec("italic") },
-              { icon: '<i class="ri-underline" title="涓嬪垝绾?></i>', title: "Underline", result: () => window.pell.exec("underline") },
+              { icon: '<i class="ri-bold" title="加粗"></i>', title: "Bold", result: () => window.pell.exec("bold") },
+              { icon: '<i class="ri-italic" title="斜体"></i>', title: "Italic", result: () => window.pell.exec("italic") },
+              { icon: '<i class="ri-underline" title="下划线"></i>', title: "Underline", result: () => window.pell.exec("underline") },
             ],
           });
           editor.content.innerHTML = customText;
@@ -338,8 +339,8 @@ export function bootGuestScreen() {
           const actionbar = document.getElementById("pell-editor-container").querySelector(".pell-actionbar");
           const select = document.createElement("select");
           select.className = "custom-pell-select";
-          select.title = "瀛楀彿";
-          select.innerHTML = `<option value="1">灏?/option><option value="3" selected>涓?/option><option value="5">澶?/option><option value="7">鐗瑰ぇ</option>`;
+          select.title = "字号";
+          select.innerHTML = `<option value="1">小</option><option value="3" selected>中</option><option value="5">大</option><option value="7">特大</option>`;
           select.onchange = () => {
             window.pell.exec("fontSize", select.value);
             editor.content.focus();
@@ -348,7 +349,7 @@ export function bootGuestScreen() {
           const colorInput = document.createElement("input");
           colorInput.type = "color";
           colorInput.className = "custom-pell-color";
-          colorInput.title = "鏂囧瓧棰滆壊";
+          colorInput.title = "文字颜色";
           colorInput.value = "var(--primary-color)";
           colorInput.onchange = () => {
             window.pell.exec("foreColor", colorInput.value);
@@ -426,7 +427,7 @@ export function bootGuestScreen() {
 
         async handleSaveSettings(editor) {
           try {
-            // 1. 鏍规嵁鏍囪鍜屾柊鏂囦欢鏇存柊鍥剧墖
+            // 1. 根据标记和新文件更新图片
             if (this.alipayCleared) {
               await CacheManager.deleteImage("alipay-qr");
             } else if (this.pendingAlipayFile) {
@@ -439,19 +440,19 @@ export function bootGuestScreen() {
               await CacheManager.storeImage("wechat-qr", this.pendingWechatFile);
             }
 
-            // 2. 淇濆瓨甯冨眬鍜屾枃瀛?
+            // 2. 保存布局和文字
             const layout = document.querySelector('input[name="layout-position"]:checked').value;
             const customText = editor.content.innerHTML;
             CacheManager.storeSettings({ layout, customText });
 
-            // 3. 閲嶆柊鍔犺浇骞跺簲鐢?
+            // 3. 重新加载并应用
             await this.loadAndApplySettings();
 
-            // 4. 鍏抽棴寮圭獥
+            // 4. 关闭弹窗
             this.closeSettingsModal();
           } catch (error) {
-            console.error("淇濆瓨璁剧疆澶辫触:", error);
-            alert("淇濆瓨璁剧疆澶辫触锛岃閲嶈瘯銆?);
+            console.error("保存设置失败:", error);
+            alert("保存设置失败，请重试。");
           }
         }
       }
@@ -472,11 +473,11 @@ export function bootGuestScreen() {
           }
         }
         if (e.key === "Escape" && !document.fullscreenElement) {
-          if (confirm("纭畾瑕佸叧闂壇灞忓悧锛?)) {
+          if (confirm("确定要关闭副屏吗？")) {
             window.close();
           }
         }
       });
     
-  return guestScreen;
+  return typeof guestScreen !== 'undefined' ? guestScreen : null
 }
