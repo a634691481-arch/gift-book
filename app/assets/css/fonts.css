@@ -1,0 +1,8 @@
+/* ==================== 字体定义 ==================== */
+@font-face {
+  font-family: "Source Han Serif CN Heavy";
+  src: url("/SourceHanSerifCN-Heavy.ttf") format("truetype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
