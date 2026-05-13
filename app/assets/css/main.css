@@ -21,15 +21,29 @@
   --name-font-family: var(--custom-name-font, "KaiTi", "楷体", serif);
   --type-font-size: var(--custom-type-size, 22px);
   --type-color: var(--custom-type-color, #c00);
-  --type-font-family: var(--custom-type-font, "Source Han Serif CN Heavy", serif);
+  --type-font-family: var(
+    --custom-type-font,
+    "Source Han Serif CN Heavy",
+    serif
+  );
 
   --amount-chinese-font-size: var(--custom-amount-chinese-size, 25px);
   --amount-chinese-color: var(--custom-amount-chinese-color, #333);
-  --amount-chinese-font-family: var(--custom-amount-chinese-font, "KaiTi", "楷体", serif);
+  --amount-chinese-font-family: var(
+    --custom-amount-chinese-font,
+    "KaiTi",
+    "楷体",
+    serif
+  );
 
   --cover-text-font-size: var(--custom-cover-text-size, 30px);
   --cover-text-color: var(--custom-cover-text-color, #f5d4ab);
-  --cover-text-font-family: var(--custom-cover-text-font, "KaiTi", "楷体", serif);
+  --cover-text-font-family: var(
+    --custom-cover-text-font,
+    "KaiTi",
+    "楷体",
+    serif
+  );
 
   --page-info-color: var(--custom-page-info-color, var(--primary-color));
   --page-info-font-family: var(--custom-page-info-font, inherit);
@@ -386,7 +400,9 @@ th.gridjs-th {
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    background: var(--custom-bg-image, url("/bg.jpg")) center/contain no-repeat, var(--primary-bg-light);
+    background:
+      var(--custom-bg-image, url("/bg.jpg")) center/contain no-repeat,
+      var(--primary-bg-light);
     overflow: hidden;
     position: relative;
     font-family: var(--print-base-font);
@@ -411,7 +427,9 @@ th.gridjs-th {
     text-align: center;
     width: 100%;
     height: 100%;
-    background: var(--custom-cover-image, url("/cover1.jpg")) center/contain no-repeat, var(--primary-bg-light);
+    background:
+      var(--custom-cover-image, url("/cover1.jpg")) center/contain no-repeat,
+      var(--primary-bg-light);
     /* 封面独立变量 */
     color: var(--cover-text-color);
     font-family: var(--cover-text-font-family);
@@ -452,8 +470,14 @@ th.gridjs-th {
   }
 
   .amount-chinese {
-    color: var(--custom-amount-chinese-color, var(--amount-chinese-color)) !important;
-    font-family: var(--custom-amount-chinese-font, var(--amount-chinese-font-family)) !important;
+    color: var(
+      --custom-amount-chinese-color,
+      var(--amount-chinese-color)
+    ) !important;
+    font-family: var(
+      --custom-amount-chinese-font,
+      var(--amount-chinese-font-family)
+    ) !important;
     font-size: var(--custom-amount-chinese-size, 18pt) !important;
   }
 
