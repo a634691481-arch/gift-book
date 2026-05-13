@@ -4,6 +4,11 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-01-01',
   devtools: { enabled: false },
 
+  experimental: {
+    // 启用 Vite Environments API，修复 SPA 模式下 resolveServerEntry 找不到入口的问题
+    viteEnvironmentApi: true,
+  },
+
   // SPA 模式：项目依赖 IndexedDB / localStorage / Cache API / postMessage 等纯客户端特性
   ssr: false,
 
@@ -34,8 +39,5 @@ export default defineNuxtConfig({
     configPath: 'tailwind.config.js',
   },
 
-  // 不预渲染，保持 SPA 交互
-  nitro: {
-    preset: 'static',
-  },
+
 })
