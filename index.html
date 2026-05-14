@@ -278,15 +278,16 @@
     .gift-book-frame {
       border: none;
       padding: 26px;
-      border-radius: var(--clay-radius-lg);
+      border-radius: var(--clay-radius-lg) !important;
       background: linear-gradient(160deg, #ffffff 0%, #fff7ed 100%);
-      box-shadow: var(--clay-shadow-out);
+      /* box-shadow: var(--clay-shadow-out); */
       position: relative;
       display: grid;
       grid-template-rows: auto 1fr;
       height: 100%;
       cursor: default;
       min-height: 450px;
+      overflow: hidden !important;
     }
 
     .theme-solemn .gift-book-frame {
@@ -1337,6 +1338,66 @@
       border-radius: 4px;
       font-weight: 700;
     }
+
+    /* ============== 主屏一屏适配（桌面端）：避免整页滚动 ============== */
+    @media screen and (min-width: 1024px) {
+      body.main-active {
+        overflow: hidden;
+        height: 100vh;
+        min-height: 100vh;
+        align-items: stretch;
+      }
+
+      body.main-active #app-container {
+        height: 100vh;
+        max-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        padding-top: 0.75rem;
+        padding-bottom: 0.75rem;
+      }
+
+      body.main-active #main-screen {
+        flex: 1 1 auto;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      body.main-active #main-screen>.grid {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      /* 左右两栏各自独立内部滚动 */
+      body.main-active #main-screen>.grid>.lg\:col-span-1,
+      body.main-active #main-screen>.grid>.lg\:col-span-2 {
+        max-height: 100%;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        scrollbar-color: #fb923c #fff7ed;
+      }
+
+      /* 细肥滚动条样式（WebKit） */
+      body.main-active #main-screen>.grid>.lg\:col-span-1::-webkit-scrollbar,
+      body.main-active #main-screen>.grid>.lg\:col-span-2::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      body.main-active #main-screen>.grid>.lg\:col-span-1::-webkit-scrollbar-thumb,
+      body.main-active #main-screen>.grid>.lg\:col-span-2::-webkit-scrollbar-thumb {
+        background: linear-gradient(160deg, #fdba74 0%, #fb923c 100%);
+        border-radius: 999px;
+      }
+
+      body.main-active #main-screen>.grid>.lg\:col-span-1::-webkit-scrollbar-track,
+      body.main-active #main-screen>.grid>.lg\:col-span-2::-webkit-scrollbar-track {
+        background: transparent;
+      }
+    }
   </style>
 </head>
 
@@ -1442,7 +1503,7 @@
       </div>
       <div class="lg:grid-cols-3 grid grid-cols-1 gap-6">
         <!-- 左侧录入区 -->
-        <div class="lg:col-span-1 p-6 bg-white rounded-lg shadow-lg">
+        <div class="lg:col-span-1 p-6 bg-white " style="box-shadow: none !important;">
           <h2 class="pb-2 mb-4 text-2xl font-bold text-center border-b">礼金录入</h2>
           <form id="add-gift-form" class="space-y-4">
             <input type="text" id="guest-name" placeholder="姓名" required
@@ -2078,9 +2139,11 @@
         if (screen === "setup") {
           this.elements.mainScreen.classList.add("hidden");
           this.elements.setupScreen.classList.remove("hidden");
+          document.body.classList.remove("main-active");
         } else if (screen === "main") {
           this.elements.setupScreen.classList.add("hidden");
           this.elements.mainScreen.classList.remove("hidden");
+          document.body.classList.add("main-active");
           // 首次进入主屏触发引导（仅一次）
           try {
             if (!localStorage.getItem("gift-book-onboarded") && window.app?.showOnboarding) {
