@@ -7,8 +7,8 @@
   <title>电子礼簿系统 - 专业版</title>
 
   <!-- Favicon -->
-  <link rel="icon" type="image/x-icon" href="./static/favicon.ico" />
-  <link rel="shortcut icon" type="image/x-icon" href="./static/favicon.ico" />
+  <link rel="icon" type="image/x-icon" href="./static/images/favicon.ico" />
+  <link rel="shortcut icon" type="image/x-icon" href="./static/images/favicon.ico" />
 
   <!-- SEO Meta -->
   <meta name="description" content="电子礼簿系统 - 专业的婚庆、白事礼金记录与管理工具。支持双屏互动、语音播报、PDF 归档、Excel 导出，离线可用，数据安全存储在本地。" />
@@ -61,18 +61,18 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
   <!-- Styles & Scripts -->
-  <script src="./static/tailwindcss.js"></script>
-  <script src="./static/xlsx.full.min.js"></script>
-  <script src="./static/crypto-js.min.js"></script>
-  <link href="./static/mermaid.min.css" rel="stylesheet" />
-  <link href="./static/remixicon.css" rel="stylesheet" />
-  <script src="./static/gridjs.umd.js"></script>
-  <script src="./static/pdf-lib.min.js"></script>
-  <script src="./static/fontkit.umd.min.js"></script>
-  <script src="./static/GiftListPDFGenerator.js"></script>
-  <link rel="preload" href="./static/bg.jpg" as="image" type="image/jpeg" />
-  <link rel="preload" href="./static/cover1.jpg" as="image" type="image/jpeg" />
-  <link rel="preload" href="./static/cover2.jpg" as="image" type="image/jpeg" />
+  <script src="./static/libs/tailwindcss.js"></script>
+  <script src="./static/libs/xlsx.full.min.js"></script>
+  <script src="./static/libs/crypto-js.min.js"></script>
+  <link href="./static/css/mermaid.min.css" rel="stylesheet" />
+  <link href="./static/css/remixicon.css" rel="stylesheet" />
+  <script src="./static/libs/gridjs.umd.js"></script>
+  <script src="./static/libs/pdf-lib.min.js"></script>
+  <script src="./static/libs/fontkit.umd.min.js"></script>
+  <script src="./static/js/GiftListPDFGenerator.js"></script>
+  <link rel="preload" href="./static/images/bg.jpg" as="image" type="image/jpeg" />
+  <link rel="preload" href="./static/images/cover1.jpg" as="image" type="image/jpeg" />
+  <link rel="preload" href="./static/images/cover2.jpg" as="image" type="image/jpeg" />
   <!-- 粘土拟态字体：Fredoka (标题) + Nunito (正文) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -83,7 +83,7 @@
     /* ==================== 字体定义 ==================== */
     @font-face {
       font-family: "Source Han Serif CN Heavy";
-      src: url("./static/SourceHanSerifCN-Heavy.ttf") format("truetype");
+      src: url("./static/fonts/SourceHanSerifCN-Heavy.ttf") format("truetype");
       font-weight: 900;
       font-style: normal;
       font-display: swap;
@@ -1014,7 +1014,7 @@
         box-sizing: border-box;
         display: flex;
         flex-direction: column;
-        background: var(--custom-bg-image, url("./static/bg.jpg")) center/contain no-repeat, var(--primary-bg-light);
+        background: var(--custom-bg-image, url("./static/images/bg.jpg")) center/contain no-repeat, var(--primary-bg-light);
         overflow: hidden;
         position: relative;
         font-family: var(--print-base-font);
@@ -2915,7 +2915,7 @@
           // 自定义图片（封面 + 背景）
           const coverImageUrl = app.currentEvent.coverType === "custom" ? (await ImageCache.getEventCoverUrl(app.currentEvent.id)) || "./static/cover1.jpg" : "./static/cover1.jpg";
 
-          const bgImageUrl = (await ImageCache.getBackgroundUrl(app.currentEvent.id)) || "./static/bg.jpg";
+          const bgImageUrl = (await ImageCache.getBackgroundUrl(app.currentEvent.id)) || "./static/images/bg.jpg";
 
           // ====================== 2. 统一加载自定义字体 ======================
           const customFontNames = {
@@ -2982,9 +2982,9 @@
             totalParts,
             grandTotalAmount: app.totalAmountCache,
             grandTotalGivers: app.totalGiversCache,
-            mainFontUrl: "./static/MaShanZheng-Regular.ttf",
-            giftLabelFontUrl: "./static/SourceHanSerifCN-Heavy.ttf",
-            formalFontUrl: "./static/NotoSansSCMedium-mini.ttf",
+            mainFontUrl: "./static/fonts/MaShanZheng-Regular.ttf",
+            giftLabelFontUrl: "./static/fonts/SourceHanSerifCN-Heavy.ttf",
+            formalFontUrl: "./static/fonts/NotoSansSCMedium-mini.ttf",
             itemsPerPage: app.getItemsPerPage(),
           };
 
