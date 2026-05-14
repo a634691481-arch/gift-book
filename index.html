@@ -1189,6 +1189,154 @@
         display: none;
       }
     }
+
+    /* ==================== 体验增强组件（空状态 / Toast / 高亮闪烁 / 金额预设 / 插件叠加）==================== */
+    .empty-state-card {
+      background: linear-gradient(160deg, #ffffff 0%, #fff7ed 100%);
+      box-shadow: var(--clay-shadow-soft, 4px 4px 12px rgba(234, 88, 12, 0.12), -3px -3px 10px rgba(255, 255, 255, 0.9));
+      border-radius: var(--clay-radius-lg, 28px);
+      animation: emptyStateFadeIn 0.6s ease-out;
+    }
+
+    @keyframes emptyStateFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .empty-state-icon {
+      background: linear-gradient(160deg, #fb923c 0%, #ea580c 100%);
+      color: #ffffff;
+      box-shadow: 6px 6px 14px rgba(234, 88, 12, 0.3), -3px -3px 10px rgba(255, 255, 255, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    }
+
+    .empty-tip-chip {
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: linear-gradient(160deg, #fff7ed 0%, #ffe8d1 100%);
+      box-shadow: inset 2px 2px 6px rgba(234, 88, 12, 0.1), inset -2px -2px 6px rgba(255, 255, 255, 0.95);
+      font-weight: 600;
+    }
+
+    /* 功能区下方快捷胶囊按钮 */
+    button.empty-tip-chip {
+      border: none;
+      cursor: pointer;
+      color: #9a3412;
+      font-size: 0.85rem;
+      transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+    }
+
+    button.empty-tip-chip:hover {
+      transform: translateY(-2px);
+      box-shadow: 4px 4px 12px rgba(234, 88, 12, 0.2), -2px -2px 8px rgba(255, 255, 255, 0.9);
+    }
+
+    button.empty-tip-chip:active {
+      transform: translateY(0);
+      box-shadow: inset 3px 3px 8px rgba(234, 88, 12, 0.18), inset -2px -2px 6px rgba(255, 255, 255, 0.7);
+    }
+
+    /* 高亮闪烁：搜索跳转后高亮目标记录 */
+    @keyframes highlightFlash {
+
+      0%,
+      100% {
+        box-shadow: var(--clay-shadow-soft, 4px 4px 12px rgba(234, 88, 12, 0.12));
+        transform: translateY(0);
+      }
+
+      30% {
+        box-shadow: 0 0 0 4px #fb923c, 8px 12px 24px rgba(234, 88, 12, 0.4);
+        transform: translateY(-3px);
+      }
+
+      60% {
+        box-shadow: 0 0 0 6px rgba(251, 146, 60, 0.4), 8px 12px 24px rgba(234, 88, 12, 0.3);
+        transform: translateY(-3px);
+      }
+    }
+
+    .highlight-flash {
+      animation: highlightFlash 1.5s ease-in-out;
+    }
+
+    /* 金额预设胶囊按钮 */
+    .amount-preset-btn {
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: linear-gradient(160deg, #ffffff 0%, #fff7ed 100%);
+      color: #9a3412;
+      font-weight: 700;
+      font-size: 0.85rem;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+      box-shadow: var(--clay-shadow-soft, 3px 3px 8px rgba(234, 88, 12, 0.15), -2px -2px 6px rgba(255, 255, 255, 0.85));
+    }
+
+    .amount-preset-btn:hover {
+      transform: translateY(-2px);
+      background: linear-gradient(160deg, #fb923c 0%, #ea580c 100%);
+      color: #ffffff;
+    }
+
+    .amount-preset-btn:active {
+      transform: translateY(0);
+      box-shadow: inset 3px 3px 8px rgba(234, 88, 12, 0.2), inset -2px -2px 6px rgba(255, 255, 255, 0.8);
+    }
+
+    /* 快捷键面板中的键位胶囊 */
+    .kbd-key {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 28px;
+      padding: 3px 8px;
+      margin: 0 2px;
+      border-radius: 8px;
+      background: linear-gradient(160deg, #ffffff 0%, #fff7ed 100%);
+      box-shadow: 2px 2px 6px rgba(234, 88, 12, 0.18), -1px -1px 4px rgba(255, 255, 255, 0.95), inset 0 -1px 0 rgba(234, 88, 12, 0.15);
+      font-family: "Fredoka", monospace;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #9a3412;
+    }
+
+    /* 快速搜索结果列表项 */
+    .quick-search-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      margin-bottom: 6px;
+      border-radius: 14px;
+      background: linear-gradient(160deg, #ffffff 0%, #fff7ed 100%);
+      box-shadow: 2px 2px 8px rgba(234, 88, 12, 0.08), -1px -1px 4px rgba(255, 255, 255, 0.9);
+      cursor: pointer;
+      transition: all 0.15s ease-out;
+    }
+
+    .quick-search-item:hover,
+    .quick-search-item.active {
+      transform: translateX(2px);
+      background: linear-gradient(160deg, #fff7ed 0%, #ffe8d1 100%);
+      box-shadow: 4px 4px 12px rgba(234, 88, 12, 0.18), -2px -2px 6px rgba(255, 255, 255, 0.95);
+    }
+
+    .quick-search-item mark {
+      background: linear-gradient(160deg, #fde047 0%, #f59e0b 100%);
+      color: #7c2d12;
+      padding: 0 3px;
+      border-radius: 4px;
+      font-weight: 700;
+    }
   </style>
 </head>
 
@@ -1301,6 +1449,20 @@
               class="focus:ring-2 themed-ring w-full p-3 border rounded-lg" />
             <input type="number" id="gift-amount" placeholder="金额 (元)" required min="0" max="999999999999" step="0.01"
               class="focus:ring-2 themed-ring w-full p-3 border rounded-lg" />
+            <!-- 金额预设胶囊按钮：点击直接填入金额输入框，现场录入提速 -->
+            <div class="amount-presets gap-x-1.5 gap-y-2 flex flex-wrap items-center">
+              <span class="whitespace-nowrap text-xs font-medium text-gray-500 mr-1">快选：</span>
+              <button type="button" class="amount-preset-btn" data-amount="100">100</button>
+              <button type="button" class="amount-preset-btn" data-amount="200">200</button>
+              <button type="button" class="amount-preset-btn" data-amount="500">500</button>
+              <button type="button" class="amount-preset-btn" data-amount="800">800</button>
+              <button type="button" class="amount-preset-btn" data-amount="1000">1000</button>
+              <button type="button" class="amount-preset-btn" data-amount="1314">1314</button>
+              <button type="button" class="amount-preset-btn" data-amount="1666">1666</button>
+              <button type="button" class="amount-preset-btn" data-amount="1888">1888</button>
+              <button type="button" class="amount-preset-btn" data-amount="2000">2000</button>
+              <button type="button" class="amount-preset-btn" data-amount="8888">8888</button>
+            </div>
             <div class="gap-x-2 gap-y-2 flex flex-wrap items-center">
               <label class="whitespace-nowrap text-sm font-medium text-gray-700">收款类型：</label>
               <div class="gap-x-3 gap-y-2 flex flex-wrap">
@@ -1334,9 +1496,17 @@
             <button type="submit"
               class="themed-button-primary w-full p-4 text-lg font-bold transition duration-300 rounded-lg">确认录入</button>
           </form>
-          <div class="pt-6 mt-6 border-t">
-            <h3 class="mb-3 text-xl font-semibold">功能区</h3>
-            <div class="space-y-3">
+          <div class="pt-6 mt-6 border-t" id="tools-section">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-xl font-semibold">功能区</h3>
+              <button id="open-tools-btn" type="button"
+                class="flex items-center gap-1.5 px-4 py-2 rounded-full font-bold text-sm text-white transition-all hover:scale-105"
+                style="background:linear-gradient(160deg,#fb923c 0%,#ea580c 100%);box-shadow:4px 4px 12px rgba(234,88,12,0.25),-2px -2px 8px rgba(255,255,255,0.5);">
+                <i class="ri-apps-2-line text-base"></i>
+                <span>打开</span>
+              </button>
+            </div>
+            <div id="tools-panel" class="space-y-3 hidden">
               <div class="relative">
                 <input type="text" id="search-name" placeholder="按姓名查找..."
                   class="focus:ring-2 themed-ring w-full p-3 pr-10 border rounded-lg" />
@@ -1356,6 +1526,14 @@
                   </div>
                 </label>
               </div>
+            </div>
+            <!-- 功能区下方常驻快捷胶囊（可点击触发快捷动作） -->
+            <div id="tools-quick-chips" class="flex flex-wrap gap-2 mt-3 justify-center">
+              <button type="button" class="empty-tip-chip" data-tool-action="shortcuts" title="快捷键面板">📝 快捷键 ?</button>
+              <button type="button" class="empty-tip-chip" data-tool-action="search" title="全局快速搜索">🔍 Ctrl+K
+                搜索</button>
+              <button type="button" class="empty-tip-chip" data-tool-action="print" title="打印 / 另存为 PDF">🗄️ Ctrl+P
+                打印</button>
             </div>
           </div>
         </div>
@@ -1390,7 +1568,7 @@
     </div>
 
     <!-- 底部开源项目链接（首页底部） -->
-    <footer id="site-footer" class="w-full mt-8 py-6 print:hidden">
+    <!-- <footer id="site-footer" class="w-full mt-8 py-6 print:hidden">
       <div class="max-w-5xl mx-auto px-4">
         <div class="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6">
           <span class="text-sm font-medium" style="color: var(--clay-muted, #c2410c);">其他开源项目：</span>
@@ -1411,7 +1589,7 @@
           电子礼簿系统 - 专业版 · 开源免费
         </p>
       </div>
-    </footer>
+    </footer> -->
   </div>
   <div class="lg:fixed top-5 right-5 absolute z-40 flex gap-3">
     <button id="support-btn"
@@ -1903,6 +2081,12 @@
         } else if (screen === "main") {
           this.elements.setupScreen.classList.add("hidden");
           this.elements.mainScreen.classList.remove("hidden");
+          // 首次进入主屏触发引导（仅一次）
+          try {
+            if (!localStorage.getItem("gift-book-onboarded") && window.app?.showOnboarding) {
+              setTimeout(() => window.app.showOnboarding(), 600);
+            }
+          } catch (_) { }
         }
       }
 
@@ -1918,13 +2102,24 @@
        *   - id: 可选，按钮ID
        *   - role: 可选，按钮角色（primary/secondary）。默认最后一个为 primary
        */
-      showModal(title, content, actions = []) {
+      showModal(title, content, actions = [], options = {}) {
         // 设置对话框内容
         this.elements.modalTitle.innerHTML = title;
         this.elements.modalContent.innerHTML = content;
         // 确保按钮区域可见（防止被先前流程隐藏）
         this.elements.modalActions.classList.remove("hidden");
         this.elements.modalActions.innerHTML = ""; // 清空旧按钮防止重复
+
+        // 防误关：记录初始表单快照（在内容渲染后立即捕获）
+        // options.dirtyCheck === true 时，关闭前会比对 input/textarea/select 的当前值与快照
+        this._modalDirtyCheck = !!options.dirtyCheck;
+        this._modalInitialSnapshot = null;
+        if (this._modalDirtyCheck) {
+          // 延迟到渲染后再快照，避免错过动态生成的输入框
+          setTimeout(() => {
+            this._modalInitialSnapshot = this._snapshotModalInputs();
+          }, 20);
+        }
 
         // 动态创建按钮
         let primaryButton = null;
@@ -1936,8 +2131,12 @@
           const role = action.role || (idx === actions.length - 1 ? "primary" : "secondary");
           button.dataset.role = role;
           button.onclick = () => {
+            // primary 按钮（确认）跳过 dirtyCheck，secondary（取消/返回）才检查
+            if (!action.keepOpen && this._modalDirtyCheck && role !== "primary" && this._isModalDirty()) {
+              if (!window.confirm("当前弹窗内有未保存的修改，确定要放弃吗？")) return;
+            }
             action.handler?.(); // 执行回调（如果存在）
-            if (!action.keepOpen) this.closeModal(); // 除非指定保持打开，否则自动关闭
+            if (!action.keepOpen) this.closeModal(true); // skipDirty=true，因为已在按钮里检查过
           };
           if (role === "primary") primaryButton = button;
           this.elements.modalActions.appendChild(button);
@@ -1952,8 +2151,33 @@
       }
 
       /**
+       * 快照当前 modal 内所有 input/textarea/select 的值
        */
-      closeModal() {
+      _snapshotModalInputs() {
+        const inputs = this.elements.modalContent.querySelectorAll("input, textarea, select");
+        return Array.from(inputs).map((el) => {
+          if (el.type === "checkbox" || el.type === "radio") return el.checked ? "1" : "0";
+          return el.value || "";
+        }).join("|");
+      }
+
+      /**
+       * 检测 modal 内表单是否有变化
+       */
+      _isModalDirty() {
+        if (!this._modalInitialSnapshot) return false;
+        return this._snapshotModalInputs() !== this._modalInitialSnapshot;
+      }
+
+      /**
+       */
+      closeModal(skipDirty = false) {
+        // Esc 关闭路径：检查 dirtyCheck
+        if (!skipDirty && this._modalDirtyCheck && this._isModalDirty()) {
+          if (!window.confirm("当前弹窗内有未保存的修改，确定要放弃吗？")) return;
+        }
+        this._modalDirtyCheck = false;
+        this._modalInitialSnapshot = null;
         this.elements.modalContainer.classList.add("hidden");
         this.elements.modal.classList.remove("modal-large");
         document.body.style.overflow = "auto";
@@ -1961,27 +2185,47 @@
 
       /**
        */
-      showNotification(message, type = "info") {
+      showNotification(message, type = "info", options = {}) {
         const notification = document.createElement("div");
-        notification.className = "fixed top-5 right-5 flex items-center px-4 py-3 rounded-lg shadow-xl text-white z-[100] transition-all duration-500 ease-in-out opacity-0 -translate-y-full";
+        // 粘土风暖色 toast，右上滑入，可点击撤销按钮
+        notification.className = "clay-toast fixed top-5 right-5 flex items-center gap-3 px-5 py-3.5 rounded-2xl text-white z-[100] transition-all duration-500 ease-in-out opacity-0 -translate-y-full max-w-md";
 
         const styles = {
-          info: { icon: "ri-information-line", bg: "bg-blue-600" },
-          success: { icon: "ri-check-line", bg: "bg-green-600" },
-          error: { icon: "ri-error-warning-line", bg: "themed-button-primary" },
+          info: { icon: "ri-information-line", bg: "linear-gradient(160deg, #38bdf8 0%, #0284c7 100%)" },
+          success: { icon: "ri-checkbox-circle-line", bg: "linear-gradient(160deg, #4ade80 0%, #16a34a 100%)" },
+          error: { icon: "ri-error-warning-line", bg: "linear-gradient(160deg, #fb923c 0%, #dc2626 100%)" },
+          warn: { icon: "ri-alert-line", bg: "linear-gradient(160deg, #fbbf24 0%, #d97706 100%)" },
         };
 
         const style = styles[type] || styles.info;
-        notification.classList.add(style.bg);
-        notification.innerHTML = `<i class="${style.icon} text-xl mr-1"></i><span>${message}</span>`;
+        notification.style.background = style.bg;
+        notification.style.boxShadow = "8px 8px 20px rgba(234,88,12,0.18), -4px -4px 12px rgba(255,255,255,0.6), inset 0 1px 0 rgba(255,255,255,0.35)";
+
+        const actionHtml = options.actionText
+          ? `<button class="clay-toast-action ml-2 px-3 py-1 rounded-full bg-white/25 hover:bg-white/40 text-sm font-bold whitespace-nowrap transition">${options.actionText}</button>`
+          : "";
+        notification.innerHTML = `<i class="${style.icon} text-2xl"></i><span class="font-semibold flex-1">${message}</span>${actionHtml}`;
+
+        if (options.actionText && typeof options.onAction === "function") {
+          notification.querySelector(".clay-toast-action").addEventListener("click", (ev) => {
+            ev.stopPropagation();
+            options.onAction();
+            // 点击后立即移除
+            notification.classList.add("opacity-0", "-translate-y-full");
+            setTimeout(() => notification.remove(), 300);
+          });
+        }
 
         document.body.appendChild(notification);
         setTimeout(() => notification.classList.remove("opacity-0", "-translate-y-full"), 10);
 
+        const duration = options.duration || (options.actionText ? 6000 : 3000);
         setTimeout(() => {
           notification.classList.add("opacity-0", "-translate-y-full");
           notification.addEventListener("transitionend", () => notification.remove());
-        }, 3000);
+        }, duration);
+
+        return notification;
       }
 
       /**
@@ -2470,6 +2714,24 @@
         const pageSize = app.getItemsPerPage();
         const items = app.gifts.slice((app.currentPage - 1) * pageSize, app.currentPage * pageSize);
         app.ui.elements.giftBookContent.innerHTML = "";
+        // 空数据友好提示：本事项下还没有任何记录时，渲染粘土风提示卡
+        if (app.gifts.length === 0) {
+          const emptyState = document.createElement("div");
+          emptyState.className = "empty-state-card flex flex-col items-center justify-center text-center py-12 px-6 rounded-3xl";
+          emptyState.innerHTML = `
+            <div class="empty-state-icon mb-4 w-20 h-20 rounded-full flex items-center justify-center">
+              <i class="ri-quill-pen-line text-4xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-2" style="color: var(--clay-text, #9a3412);">还没有记录哟</h3>
+            <p class="text-sm leading-relaxed" style="color: var(--clay-muted, #c2410c);">请在左侧「礼金录入」区填写宾客姓名与金额，<br>点击「确认录入」开始你的第一笔记录。</p>
+            <div class="mt-5 flex flex-wrap items-center justify-center gap-2 text-xs" style="color: var(--clay-muted, #c2410c);">
+              <span class="empty-tip-chip">📝 快捷键 ?</span>
+              <span class="empty-tip-chip">🔍 Ctrl+K 搜索</span>
+              <span class="empty-tip-chip">🗄️ Ctrl+P 打印</span>
+            </div>`;
+          app.ui.elements.giftBookContent.appendChild(emptyState);
+          return;
+        }
         app.ui.elements.giftBookContent.appendChild(app.exportService.createGiftBookRows(items, false, pageSize));
       }
 
@@ -4085,6 +4347,9 @@
         }
 
         const stats = app.cachedStats;
+        const activeGifts = app.gifts.filter((g) => g.data && !g.data.abolished);
+        const rankingHtml = this._generateRankingHtml(activeGifts);
+        const pieChartHtml = this._generatePieChartHtml(stats);
 
         const statsHtml = `
                       <div class="md:grid-cols-4 grid grid-cols-1 gap-6">
@@ -4138,7 +4403,12 @@
             .map(([type, amount]) => `<li class="flex justify-between"><span>${type}:</span> <span>${Utils.formatCurrency(amount)}</span></li>`)
             .join("")}</ul>
                           </div>
-                          <div class="pt-4 mt-4 border-t">
+                          ${pieChartHtml}
+                          ${rankingHtml}
+                          <div class="pt-4 mt-4 border-t space-y-2">
+                            <button id="timeline-replay-btn" class="flex items-center justify-center w-full gap-2 p-3 rounded-lg font-bold text-white" style="background:linear-gradient(160deg,#fb923c 0%,#ea580c 100%);box-shadow:6px 6px 16px rgba(234,88,12,0.25),-2px -2px 8px rgba(255,255,255,0.5);">
+                              <i class="ri-film-line text-xl"></i><span>时间轴回放</span>
+                            </button>
                             <button id="export-excel-stats-btn" class="themed-button-primary flex items-center justify-center w-full gap-2 p-3 rounded-lg">
                               <i class="ri-file-excel-line text-xl"></i>
                               <span>导出 Excel</span>
@@ -4274,7 +4544,178 @@
               app.exportService.exportToExcel();
             });
           }
+          const timelineBtn = document.getElementById("timeline-replay-btn");
+          if (timelineBtn) {
+            timelineBtn.addEventListener("click", () => this.showTimelineReplay());
+          }
         }, 100);
+      }
+
+      /**
+       * 生成 TOP10 礼金排行榜 + 末 5 名（红黑榜）
+       */
+      _generateRankingHtml(activeGifts) {
+        if (!activeGifts || activeGifts.length === 0) return "";
+        const sorted = [...activeGifts].sort((a, b) => (b.data.amount || 0) - (a.data.amount || 0));
+        const topN = Math.min(10, sorted.length);
+        const top = sorted.slice(0, topN);
+        const tailCount = sorted.length >= 6 ? Math.min(5, sorted.length - topN) : 0;
+        const tail = tailCount > 0 ? sorted.slice(-tailCount).reverse() : [];
+        const escHtml = (s) => String(s ?? "").replace(/[&<>\"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+        const medal = (i) => i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `<span class="text-xs text-orange-500 font-bold">${i + 1}</span>`;
+        const topItems = top.map((g, i) => `
+          <li class="flex items-center justify-between py-1.5 px-2 rounded-lg ${i < 3 ? "bg-gradient-to-r from-orange-50 to-yellow-50" : ""}">
+            <div class="flex items-center gap-2 min-w-0"><span class="w-6 text-center">${medal(i)}</span><span class="truncate font-medium text-gray-800">${escHtml(g.data.name)}</span></div>
+            <span class="font-bold text-orange-700 ml-2 whitespace-nowrap">¥${Number(g.data.amount || 0).toLocaleString("zh-CN")}</span>
+          </li>`).join("");
+        const tailItems = tail.map((g) => `
+          <li class="flex items-center justify-between py-1.5 px-2 rounded-lg">
+            <div class="flex items-center gap-2 min-w-0"><span class="w-6 text-center text-xs text-gray-500 font-bold">·</span><span class="truncate font-medium text-gray-700">${escHtml(g.data.name)}</span></div>
+            <span class="font-bold text-gray-600 ml-2 whitespace-nowrap">¥${Number(g.data.amount || 0).toLocaleString("zh-CN")}</span>
+          </li>`).join("");
+        return `
+          <div class="pt-4 mt-4 border-t">
+            <h4 class="mb-2 font-semibold flex items-center gap-1"><i class="ri-trophy-line text-orange-500"></i> 礼金排行榜 TOP ${topN}</h4>
+            <ul class="space-y-1">${topItems}</ul>
+            ${tail.length ? `<details class="mt-3"><summary class="cursor-pointer text-sm text-gray-500 font-medium select-none">查看末 ${tail.length} 名</summary><ul class="space-y-1 mt-2">${tailItems}</ul></details>` : ""}
+          </div>`;
+      }
+
+      /**
+       * 生成收款方式饬图（conic-gradient 实现，无需额外依赖）
+       */
+      _generatePieChartHtml(stats) {
+        const total = (stats.byType["现金"] || 0) + (stats.byType["支付宝"] || 0) + (stats.byType["微信"] || 0) + (stats.byType["其他"] || 0);
+        if (total <= 0) return "";
+        const colors = { "现金": "#fb923c", "支付宝": "#3b82f6", "微信": "#10b981", "其他": "#a855f7" };
+        let acc = 0;
+        const segs = [];
+        const legend = [];
+        for (const t of ["现金", "支付宝", "微信", "其他"]) {
+          const v = stats.byType[t] || 0;
+          if (v <= 0) continue;
+          const pct = (v / total) * 100;
+          const start = acc;
+          acc += pct;
+          segs.push(`${colors[t]} ${start.toFixed(2)}% ${acc.toFixed(2)}%`);
+          legend.push(`<li class="flex items-center justify-between text-xs"><span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded-sm" style="background:${colors[t]}"></span>${t}</span><span class="font-bold text-gray-700">${pct.toFixed(1)}%</span></li>`);
+        }
+        if (!segs.length) return "";
+        const gradient = `conic-gradient(${segs.join(", ")})`;
+        return `
+          <div class="pt-4 mt-4 border-t">
+            <h4 class="mb-2 font-semibold flex items-center gap-1"><i class="ri-pie-chart-line text-orange-500"></i> 收款方式占比</h4>
+            <div class="flex items-center gap-3">
+              <div class="relative shrink-0" style="width:96px;height:96px;">
+                <div class="w-full h-full rounded-full" style="background:${gradient};box-shadow:4px 4px 12px rgba(234,88,12,0.18),-2px -2px 8px rgba(255,255,255,0.85);"></div>
+                <div class="absolute inset-3 rounded-full bg-white flex flex-col items-center justify-center text-center" style="box-shadow:inset 2px 2px 6px rgba(234,88,12,0.12);">
+                  <span class="text-[10px] text-gray-500">合计</span>
+                  <span class="text-xs font-bold text-orange-700">¥${Number(total).toLocaleString("zh-CN")}</span>
+                </div>
+              </div>
+              <ul class="flex-1 space-y-1.5">${legend.join("")}</ul>
+            </div>
+          </div>`;
+      }
+
+      /**
+       * 礼簿时间轴回放
+       * 按时间顺序逐条高亮出现，模拟「过场」走马灯效果
+       */
+      showTimelineReplay() {
+        const app = this.app;
+        const valid = app.gifts.filter((g) => g.data && !g.data.abolished && g.data.timestamp);
+        if (valid.length === 0) {
+          app.ui.showNotification("暂无可回放的礼金记录。", "warn");
+          return;
+        }
+        const sorted = [...valid].sort((a, b) => new Date(a.data.timestamp) - new Date(b.data.timestamp));
+        const escHtml = (s) => String(s ?? "").replace(/[&<>\"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+        let runningTotal = 0;
+        const items = sorted.map((g, i) => {
+          runningTotal += g.data.amount || 0;
+          const t = new Date(g.data.timestamp);
+          const ts = `${t.getMonth() + 1}/${t.getDate()} ${String(t.getHours()).padStart(2, "0")}:${String(t.getMinutes()).padStart(2, "0")}`;
+          return `
+            <li class="timeline-item flex items-start gap-3 py-2.5 px-3 rounded-xl mb-2 opacity-25 transition-all duration-500" data-idx="${i}" data-running="${runningTotal}" style="background:linear-gradient(160deg,#ffffff 0%,#fff7ed 100%);">
+              <div class="shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-white font-bold" style="background:linear-gradient(160deg,#fb923c 0%,#ea580c 100%);">${i + 1}</div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-baseline gap-2"><span class="font-bold text-orange-900 truncate">${escHtml(g.data.name)}</span><span class="text-xs text-orange-500">${ts}</span></div>
+                <div class="text-xs text-orange-700/80 mt-0.5">${escHtml(g.data.type || "现金")}${g.data.giftType ? " · " + escHtml(g.data.giftType) : ""}</div>
+              </div>
+              <div class="shrink-0 font-bold text-lg text-orange-700 self-center">¥${Number(g.data.amount || 0).toLocaleString("zh-CN")}</div>
+            </li>`;
+        }).join("");
+        const content = `
+          <div class="flex flex-col gap-3">
+            <div class="flex items-center justify-between gap-3 px-1">
+              <div class="text-sm text-orange-700/90">共 <b id="tl-total-count">${sorted.length}</b> 条 · 进度 <b id="tl-progress">0</b>/<span>${sorted.length}</span> · 累计 ¥<b id="tl-running">0</b></div>
+              <div class="flex items-center gap-2">
+                <button id="tl-pause" class="px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-sm font-bold"><i class="ri-pause-line"></i> 暂停</button>
+                <button id="tl-restart" class="px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-sm font-bold"><i class="ri-restart-line"></i> 重播</button>
+                <select id="tl-speed" class="px-2 py-1 rounded-full bg-orange-100 text-orange-700 text-sm font-bold border-0">
+                  <option value="600">0.5x</option>
+                  <option value="300" selected>1x</option>
+                  <option value="120">2x</option>
+                  <option value="40">5x</option>
+                </select>
+              </div>
+            </div>
+            <ul id="tl-list" class="max-h-[55vh] overflow-y-auto pr-1">${items}</ul>
+          </div>`;
+        app.ui.showModal("🎬 礼簿时间轴回放", content, [
+          { text: "关闭", class: "px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300", role: "primary" },
+        ]);
+        app.ui.elements.modal.classList.add("modal-large");
+
+        const list = document.getElementById("tl-list");
+        const progressEl = document.getElementById("tl-progress");
+        const runningEl = document.getElementById("tl-running");
+        const pauseBtn = document.getElementById("tl-pause");
+        const restartBtn = document.getElementById("tl-restart");
+        const speedSel = document.getElementById("tl-speed");
+        if (!list) return;
+        const itemsEls = Array.from(list.querySelectorAll(".timeline-item"));
+        let cursor = 0;
+        let timer = null;
+        let paused = false;
+        let interval = parseInt(speedSel.value, 10) || 300;
+        const stepNext = () => {
+          if (paused) return;
+          if (cursor >= itemsEls.length) { clearInterval(timer); timer = null; return; }
+          const el = itemsEls[cursor];
+          el.classList.remove("opacity-25");
+          el.classList.add("opacity-100");
+          el.style.transform = "translateX(0)";
+          el.style.boxShadow = "6px 6px 16px rgba(234,88,12,0.18),-2px -2px 8px rgba(255,255,255,0.95)";
+          el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          progressEl.textContent = String(cursor + 1);
+          runningEl.textContent = Number(el.dataset.running || 0).toLocaleString("zh-CN");
+          cursor++;
+        };
+        const startTimer = () => {
+          if (timer) clearInterval(timer);
+          timer = setInterval(stepNext, interval);
+        };
+        startTimer();
+        pauseBtn.addEventListener("click", () => {
+          paused = !paused;
+          pauseBtn.innerHTML = paused ? '<i class="ri-play-line"></i> 继续' : '<i class="ri-pause-line"></i> 暂停';
+          if (!paused && !timer) startTimer();
+        });
+        restartBtn.addEventListener("click", () => {
+          cursor = 0;
+          paused = false;
+          pauseBtn.innerHTML = '<i class="ri-pause-line"></i> 暂停';
+          itemsEls.forEach((el) => { el.classList.add("opacity-25"); el.classList.remove("opacity-100"); el.style.boxShadow = ""; });
+          progressEl.textContent = "0";
+          runningEl.textContent = "0";
+          startTimer();
+        });
+        speedSel.addEventListener("change", () => {
+          interval = parseInt(speedSel.value, 10) || 300;
+          if (!paused) startTimer();
+        });
       }
 
       /**
@@ -4753,6 +5194,19 @@
             this.toggleRemarkPreset(preset, btn);
           });
         });
+
+        // 金额预设胶囊按钮：点击填入金额输入框
+        document.querySelectorAll(".amount-preset-btn").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            const amount = btn.dataset.amount;
+            if (!amount) return;
+            this.ui.elements.giftAmountInput.value = amount;
+            // 触发 input 事件，让可能的其他监听器（如大写预览）生效
+            this.ui.elements.giftAmountInput.dispatchEvent(new Event("input", { bubbles: true }));
+            this.ui.elements.giftAmountInput.focus();
+          });
+        });
         // 分页按钮
         this.ui.elements.prevPageBtn.addEventListener("click", () => this.giftManager.changePage(-1));
         this.ui.elements.nextPageBtn.addEventListener("click", () => this.giftManager.changePage(1));
@@ -4763,6 +5217,22 @@
         this.ui.elements.statsBtn.addEventListener("click", () => this.statsService.showStatistics());
         this.ui.elements.searchIcon.addEventListener("click", () => this.handleSearch());
         this.ui.elements.searchNameInput.addEventListener("keyup", (e) => e.key === "Enter" && this.handleSearch());
+
+        // 功能区弹窗触发按钮
+        const openToolsBtn = document.getElementById("open-tools-btn");
+        if (openToolsBtn) {
+          openToolsBtn.addEventListener("click", () => this.openToolsModal());
+        }
+
+        // 功能区下方快捷胶囊按钮
+        document.querySelectorAll("#tools-quick-chips [data-tool-action]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const act = btn.dataset.toolAction;
+            if (act === "shortcuts") this.showShortcutsModal();
+            else if (act === "search") this.showQuickSearchModal();
+            else if (act === "print") this.exportService.prepareForPrint();
+          });
+        });
 
         // 语音开关
         this.ui.elements.speechToggle.addEventListener("change", (e) => {
@@ -4879,6 +5349,23 @@
           const isModalVisible = !this.ui.elements.modalContainer.classList.contains("hidden");
           const activeElement = document.activeElement;
           const isMainScreenVisible = !this.ui.elements.mainScreen.classList.contains("hidden");
+
+          // Ctrl+K：全局快速搜索（仅主屏 + 无 modal 时）
+          if (e.ctrlKey && e.key.toLowerCase() === "k" && isMainScreenVisible && !isModalVisible) {
+            e.preventDefault();
+            this.showQuickSearchModal();
+            return;
+          }
+
+          // ?（Shift+/）：快捷键面板
+          if (e.key === "?" && isMainScreenVisible && !isModalVisible) {
+            const inInput = activeElement && (activeElement.tagName === "INPUT" || activeElement.tagName === "TEXTAREA" || activeElement.isContentEditable);
+            if (!inInput) {
+              e.preventDefault();
+              this.showShortcutsModal();
+              return;
+            }
+          }
 
           if (isModalVisible) {
             if (e.key === "Escape") {
@@ -5137,12 +5624,23 @@
                             ${remarkInputsHTML}
                           </div>`;
         } else if (nameExists) {
+          // 枚举已存在的同名记录，帮助用户识别是否重复
+          const existingItems = this.gifts
+            .filter((g) => g.data?.name === name && !g.data?.abolished)
+            .slice(0, 5)
+            .map((g) => {
+              const t = g.data?.timestamp ? new Date(g.data.timestamp) : null;
+              const dateStr = t ? `${t.getMonth() + 1}月${t.getDate()}日` : "";
+              return `<li class="flex justify-between items-center text-sm"><span>${dateStr} · ${g.data?.type || ""}</span><span class="font-bold text-orange-700">${Utils.formatCurrency(g.data?.amount || 0)}</span></li>`;
+            })
+            .join("");
           modalTitle = "同名信息确认";
           modalContent = `
                           <div class="space-y-3 text-left">
-                            <div class="p-2 text-sm text-yellow-800 bg-yellow-100 rounded-md">
-                              <strong>注意：</strong>系统中已存在名为 <strong>${name}</strong> 的记录。为避免混淆，建议您添加备注。
+                            <div class="p-3 text-sm text-yellow-800 bg-yellow-100 rounded-md">
+                              <strong>注意：</strong>系统中已存在名为 <strong>${name}</strong> 的记录。为避免混淆，建议核对后添加备注。
                             </div>
+                            ${existingItems ? `<div class="p-3 bg-orange-50 rounded-md"><div class="text-xs font-bold text-orange-800 mb-1">已有记录：</div><ul class="space-y-1">${existingItems}</ul></div>` : ""}
                             <p><strong>来宾姓名:</strong> <span class="text-lg">${name}</span></p>
                             <p><strong>金额:</strong> <span class="themed-text text-xl font-bold">${Utils.formatCurrency(amount)}</span></p>
                             ${remarkInputsHTML}
@@ -5167,7 +5665,7 @@
         this.ui.showModal(modalTitle, modalContent, [
           { text: "返回修改", class: "themed-button-secondary border px-4 py-2 rounded" },
           { text: "确认提交", class: "themed-button-primary px-4 py-2 rounded", handler: confirmationHandler, keepOpen: true },
-        ]);
+        ], { dirtyCheck: true });
       }
 
       /**
@@ -5189,7 +5687,6 @@
        */
       async saveGift(giftData) {
         const isOutOfTime = new Date() < new Date(this.currentEvent.startDateTime) || new Date() > new Date(this.currentEvent.endDateTime);
-
         if (isOutOfTime) {
           const password = await this.requestAdminPassword("礼金补录", "当前已超出有效录入时间,请输入管理密码进行补录。", null, false);
           if (password === null) {
@@ -5248,13 +5745,303 @@
           this.ui.elements.guestNameInput.focus();
           this.giftManager.render();
           this.speakGift(giftData.name, giftData.amount);
-          this.ui.showNotification("录入成功！", "success");
+          // 带「撤销」按钮的成功 Toast：6 秒内可点击撤销刚刚的添加
+          const undoMessage = `已记录 ${giftData.name} ${Utils.formatCurrency(giftData.amount)}`;
+          this.ui.showNotification(undoMessage, "success", {
+            actionText: "撤销",
+            duration: 6000,
+            onAction: () => this._undoLastAdd(newGiftId, giftData),
+          });
           this.guestScreenService.syncToGuestScreen();
         } catch (error) {
           this.ui.closeModal();
           console.error("录入失败:", error);
           this.ui.showNotification("录入失败，请重试。", "error");
         }
+      }
+
+      /**
+       * 撤销最近一次「添加」操作
+       * 复用现有 deleteGift 链路：IndexedDB 删除 + 内存移除 + 渲染 + 副屏同步
+       */
+      async _undoLastAdd(giftId, giftData) {
+        try {
+          const idx = this.gifts.findIndex((g) => g.id === giftId);
+          if (idx === -1) {
+            // 记录已不存在，可能已被其他操作清理
+            this.ui.showNotification("该记录已不存在，无需撤销。", "warn");
+            return;
+          }
+          await this.giftRepository.deleteGift(giftId);
+          this.gifts.splice(idx, 1);
+          // 同步更新缓存
+          if (typeof this.giftManager.updateCacheOnDelete === "function") {
+            this.giftManager.updateCacheOnDelete(giftData.amount);
+          } else {
+            this.giftManager.rebuildCache();
+          }
+          // 页码修正
+          const pageSize = this.getItemsPerPage();
+          const totalPages = Math.ceil(this.gifts.length / pageSize) || 1;
+          if (this.currentPage > totalPages) this.currentPage = totalPages;
+          this.statsAreDirty = true;
+          this.giftManager.render();
+          this.guestScreenService.syncToGuestScreen();
+          this.ui.showNotification(`已撤销 ${giftData.name} 的记录。`, "info");
+        } catch (err) {
+          console.error("撤销失败：", err);
+          this.ui.showNotification("撤销失败，请手动删除。", "error");
+        }
+      }
+
+      /**
+       * 打开「功能区」弹窗
+       * 将 #tools-panel 中的 DOM 节点搬进弹窗内展示（原事件绑定保持），关闭后在原位复位
+       */
+      openToolsModal() {
+        const panel = document.getElementById("tools-panel");
+        const section = document.getElementById("tools-section");
+        if (!panel || !section) return;
+
+        // 占位容器：弹窗内部接收节点
+        this.ui.showModal(
+          "<i class='ri-apps-2-line text-orange-500 mr-1'></i> 功能区",
+          '<div id="tools-modal-mount" class="space-y-3"></div>',
+          [{ text: "关闭", class: "px-5 py-2 bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-lg font-bold shadow-lg hover:shadow-xl", role: "primary" }]
+        );
+
+        const mount = document.getElementById("tools-modal-mount");
+        if (!mount) return;
+        // 使 panel 在弹窗内可见（原状态 hidden）
+        panel.classList.remove("hidden");
+        // 搬迁全部子节点到 mount。原有事件监听不会丢失
+        const movedNodes = [];
+        while (panel.firstChild) {
+          movedNodes.push(panel.firstChild);
+          mount.appendChild(panel.firstChild);
+        }
+
+        // 监听弹窗关闭，复位子节点
+        const observer = new MutationObserver(() => {
+          if (this.ui.elements.modalContainer.classList.contains("hidden")) {
+            observer.disconnect();
+            // 搬回 panel
+            movedNodes.forEach((n) => {
+              if (n.parentNode === mount) panel.appendChild(n);
+            });
+            panel.classList.add("hidden");
+          }
+        });
+        observer.observe(this.ui.elements.modalContainer, { attributes: true, attributeFilter: ["class"] });
+      }
+
+      /**
+       * 跳转到指定礼金记录所在页并高亮 1.5 秒
+       * @param {number} giftIndex - 在 this.gifts 中的索引
+       */
+      _jumpToGiftRecord(giftIndex) {
+        if (giftIndex < 0 || giftIndex >= this.gifts.length) return;
+        const pageSize = this.getItemsPerPage();
+        const targetPage = Math.floor(giftIndex / pageSize) + 1;
+        const indexOnPage = giftIndex % pageSize;
+        if (this.currentPage !== targetPage) {
+          this.currentPage = targetPage;
+          this.giftManager.ensureCurrentPageDecrypted();
+          this.giftManager.render();
+        }
+        // 渲染后定位 DOM 单元格
+        setTimeout(() => {
+          const nameCells = this.ui.elements.giftBookContent.querySelectorAll(".name-cell");
+          const amountCells = this.ui.elements.giftBookContent.querySelectorAll(".amount-cell");
+          const target = nameCells[indexOnPage];
+          if (target) {
+            target.classList.add("highlight-flash");
+            amountCells[indexOnPage]?.classList.add("highlight-flash");
+            target.scrollIntoView({ behavior: "smooth", block: "center" });
+            setTimeout(() => {
+              target.classList.remove("highlight-flash");
+              amountCells[indexOnPage]?.classList.remove("highlight-flash");
+            }, 1600);
+          }
+        }, 80);
+      }
+
+      /**
+       * Ctrl+K 全局快速搜索弹窗
+       * 实时模糊匹配 姓名/金额/类型/备注，结果点击或回车跳转并高亮
+       */
+      showQuickSearchModal() {
+        const content = `
+          <div class="flex flex-col gap-3">
+            <div class="relative">
+              <i class="ri-search-2-line absolute left-4 top-1/2 -translate-y-1/2 text-orange-500 text-xl"></i>
+              <input id="quick-search-input" type="text" autocomplete="off" placeholder="搜姓名 / 金额 / 类型 / 备注…"
+                class="w-full pl-12 pr-4 py-3 rounded-2xl border-0 text-base font-semibold text-orange-900 placeholder-orange-300"
+                style="background: linear-gradient(160deg,#ffffff 0%,#fff7ed 100%);box-shadow: inset 4px 4px 10px rgba(234,88,12,0.12), inset -2px -2px 8px rgba(255,255,255,0.95);outline:none;">
+            </div>
+            <div id="quick-search-tip" class="text-xs text-orange-500/80 px-1">
+              <span class="kbd-key">↑</span><span class="kbd-key">↓</span> 选择 · <span class="kbd-key">Enter</span> 跳转 · <span class="kbd-key">Esc</span> 关闭
+            </div>
+            <div id="quick-search-results" class="max-h-[55vh] overflow-y-auto pr-1"></div>
+          </div>`;
+        this.ui.showModal("⚡ 快速搜索", content, [
+          { text: "关闭", class: "px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300", role: "secondary" },
+        ]);
+        // 隐藏底部按钮区域，搜索弹窗使用键盘交互
+        this.ui.elements.modal.classList.add("modal-large");
+
+        const input = document.getElementById("quick-search-input");
+        const resultsEl = document.getElementById("quick-search-results");
+        if (!input || !resultsEl) return;
+        setTimeout(() => input.focus(), 50);
+
+        let activeIdx = 0;
+        let matches = [];
+        const escHtml = (s) => String(s ?? "").replace(/[&<>\"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+        const highlight = (text, kw) => {
+          if (!kw) return escHtml(text);
+          const safe = escHtml(text);
+          const safeKw = escHtml(kw).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+          return safe.replace(new RegExp(safeKw, "gi"), (m) => `<mark>${m}</mark>`);
+        };
+        const renderList = () => {
+          if (!matches.length) {
+            resultsEl.innerHTML = `<div class="text-center py-8 text-orange-400/80"><i class="ri-search-eye-line text-4xl block mb-2"></i>${input.value.trim() ? "暂无匹配记录" : "输入关键词开始搜索"}</div>`;
+            return;
+          }
+          const kw = input.value.trim();
+          resultsEl.innerHTML = matches.slice(0, 50).map((m, i) => {
+            const t = m.gift.data?.timestamp ? new Date(m.gift.data.timestamp) : null;
+            const dateStr = t ? `${t.getMonth() + 1}/${t.getDate()}` : "--";
+            return `<div class="quick-search-item ${i === activeIdx ? "active" : ""}" data-idx="${m.originalIndex}">
+              <div class="flex-1 min-w-0">
+                <div class="font-bold text-orange-900 truncate">${highlight(m.gift.data?.name || "—", kw)}</div>
+                <div class="text-xs text-orange-600/80 mt-0.5">${escHtml(m.gift.data?.giftType || "普通")} · ${dateStr}${m.gift.data?.remark ? " · " + highlight(String(m.gift.data.remark).slice(0, 30), kw) : ""}</div>
+              </div>
+              <div class="font-bold text-lg text-orange-700 ml-3 whitespace-nowrap">¥${highlight(String(m.gift.data?.amount ?? 0), kw)}</div>
+            </div>`;
+          }).join("");
+          // 点击跳转
+          resultsEl.querySelectorAll(".quick-search-item").forEach((el) => {
+            el.addEventListener("click", () => {
+              const idx = parseInt(el.dataset.idx, 10);
+              this.ui.closeModal(true);
+              this._jumpToGiftRecord(idx);
+            });
+          });
+        };
+        const doSearch = () => {
+          const kw = input.value.trim().toLowerCase();
+          if (!kw) { matches = []; activeIdx = 0; renderList(); return; }
+          matches = [];
+          for (let i = 0; i < this.gifts.length; i++) {
+            const d = this.gifts[i].data;
+            if (!d || d.abolished) continue;
+            const hay = `${d.name || ""}|${d.amount ?? ""}|${d.giftType || ""}|${d.remark || ""}`.toLowerCase();
+            if (hay.includes(kw)) matches.push({ gift: this.gifts[i], originalIndex: i });
+          }
+          activeIdx = 0;
+          renderList();
+        };
+        input.addEventListener("input", doSearch);
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "ArrowDown") { e.preventDefault(); if (matches.length) { activeIdx = (activeIdx + 1) % Math.min(matches.length, 50); renderList(); } }
+          else if (e.key === "ArrowUp") { e.preventDefault(); if (matches.length) { activeIdx = (activeIdx - 1 + Math.min(matches.length, 50)) % Math.min(matches.length, 50); renderList(); } }
+          else if (e.key === "Enter") {
+            e.preventDefault();
+            if (matches.length) {
+              const target = matches[activeIdx];
+              this.ui.closeModal(true);
+              this._jumpToGiftRecord(target.originalIndex);
+            }
+          }
+        });
+        renderList();
+      }
+
+      /**
+       * ? 快捷键面板
+       */
+      showShortcutsModal() {
+        const row = (keys, desc) => `<div class="flex items-center justify-between py-2 px-1 border-b border-orange-100/60 last:border-0"><div class="flex items-center gap-1">${keys.map((k) => `<span class=\"kbd-key\">${k}</span>`).join("")}</div><span class="text-orange-900 text-sm font-medium">${desc}</span></div>`;
+        const content = `
+          <div class="flex flex-col gap-4">
+            <div>
+              <h4 class="text-xs font-bold text-orange-500 uppercase tracking-wider mb-1">导航与发现</h4>
+              ${row(["Ctrl", "K"], "打开快速搜索")}
+              ${row(["?"], "显示本面板")}
+              ${row(["←", "→"], "上一页 / 下一页")}
+            </div>
+            <div>
+              <h4 class="text-xs font-bold text-orange-500 uppercase tracking-wider mb-1">录入与操作</h4>
+              ${row(["Enter"], "在录入框：提交礼金")}
+              ${row(["Esc"], "关闭弹窗 / 取消")}
+              ${row(["Ctrl", "P"], "打印礼簿")}
+            </div>
+            <div class="text-xs text-orange-500/80 px-1 pt-1">提示：录入成功后右上角 Toast 内可点「撤销」回滚。</div>
+          </div>`;
+        this.ui.showModal("⌨️ 快捷键速查", content, [
+          { text: "知道了", class: "px-5 py-2 bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-lg font-bold shadow-lg hover:shadow-xl", role: "primary" },
+        ]);
+      }
+
+      /**
+       * 首次进入引导（4 步）
+       * localStorage["gift-book-onboarded"] 写入后不再触发
+       */
+      showOnboarding(forceStep) {
+        const steps = [
+          { icon: "ri-calendar-event-line", title: "1 / 4 · 创建事项", body: "先在「设置」中创建一个事项（如：婚礼/寿宴），设定开始/结束时间与主题。" },
+          { icon: "ri-quill-pen-line", title: "2 / 4 · 录入礼金", body: "填入宾客姓名与金额，可点「快选」胶囊一键填入常用金额。录入成功后 6 秒内可点 Toast 内「撤销」。" },
+          { icon: "ri-tv-2-line", title: "3 / 4 · 副屏展示", body: "打开 guest-screen.html 作为副屏，实时同步当前礼金记录与宾客欢迎语。" },
+          { icon: "ri-save-3-line", title: "4 / 4 · 备份导出", body: "统计页可导出 Excel / PDF；建议每次活动后另存一份备份文件，离线安全。" },
+        ];
+        let cur = typeof forceStep === "number" ? forceStep : 0;
+        const render = () => {
+          const s = steps[cur];
+          const dots = steps.map((_, i) => `<span class="inline-block w-2.5 h-2.5 mx-1 rounded-full ${i === cur ? "bg-orange-500" : "bg-orange-200"}"></span>`).join("");
+          const content = `
+            <div class="flex flex-col items-center text-center py-2">
+              <div class="empty-state-icon flex items-center justify-center w-20 h-20 rounded-full mb-4"><i class="${s.icon} text-4xl"></i></div>
+              <h3 class="text-xl font-bold text-orange-900 mb-2">${s.title}</h3>
+              <p class="text-orange-700/90 leading-relaxed max-w-md">${s.body}</p>
+              <div class="mt-5">${dots}</div>
+            </div>`;
+          const isLast = cur === steps.length - 1;
+          const isFirst = cur === 0;
+          const actions = [];
+          actions.push({
+            text: "跳过",
+            class: "px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300",
+            role: "secondary",
+            handler: () => { try { localStorage.setItem("gift-book-onboarded", "1"); } catch (_) { } },
+          });
+          if (!isFirst) {
+            actions.push({
+              text: "上一步",
+              class: "px-4 py-2 bg-white text-orange-700 border border-orange-300 rounded-lg hover:bg-orange-50",
+              role: "secondary",
+              keepOpen: true,
+              handler: () => { cur--; render(); },
+            });
+          }
+          actions.push({
+            text: isLast ? "开始使用 🎉" : "下一步 →",
+            class: "px-5 py-2 bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-lg font-bold shadow-lg hover:shadow-xl",
+            role: "primary",
+            keepOpen: !isLast,
+            handler: () => {
+              if (isLast) {
+                try { localStorage.setItem("gift-book-onboarded", "1"); } catch (_) { }
+              } else {
+                cur++;
+                render();
+              }
+            },
+          });
+          this.ui.showModal("✨ 欢迎使用电子礼簿", content, actions);
+        };
+        render();
       }
 
       /**
