@@ -5,6 +5,62 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>电子礼簿系统 - 专业版</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="./static/favicon.ico" />
+  <link rel="shortcut icon" type="image/x-icon" href="./static/favicon.ico" />
+
+  <!-- SEO Meta -->
+  <meta name="description" content="电子礼簿系统 - 专业的婚庆、白事礼金记录与管理工具。支持双屏互动、语音播报、PDF 归档、Excel 导出，离线可用，数据安全存储在本地。" />
+  <meta name="keywords" content="电子礼簿,礼金记录,婚礼记录,白事礼簿,礼簿系统,礼金管理,结婚礼簿,中国传统礼仪" />
+  <meta name="author" content="电子礼簿系统" />
+  <meta name="robots" content="index, follow" />
+  <meta name="theme-color" content="#e85d2f" />
+  <meta name="msapplication-TileColor" content="#e85d2f" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="电子礼簿系统 - 专业版" />
+  <meta property="og:description" content="专业的婚庆、白事礼金记录与管理工具，支持双屏互动、语音播报、PDF 归档、Excel 导出。" />
+  <meta property="og:site_name" content="电子礼簿系统" />
+  <meta property="og:locale" content="zh_CN" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="电子礼簿系统 - 专业版" />
+  <meta name="twitter:description" content="专业的婚庆、白事礼金记录与管理工具，支持双屏互动、语音播报、PDF 归档、Excel 导出。" />
+
+  <!-- Canonical -->
+  <link rel="canonical" href="https://gift-book.example.com" />
+
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "电子礼簿系统 - 专业版",
+    "description": "专业的婚庆、白事礼金记录与管理工具，支持双屏互动、语音播报、PDF 归档、Excel 导出，离线可用，数据安全存储在本地。",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "Any",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "CNY"
+    },
+    "author": {
+      "@type": "Organization",
+      "name": "电子礼簿系统"
+    },
+    "inLanguage": "zh-CN",
+    "isAccessibleForFree": true
+  }
+  </script>
+
+  <!-- Preconnect -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <!-- Styles & Scripts -->
   <script src="./static/tailwindcss.js"></script>
   <script src="./static/xlsx.full.min.js"></script>
   <script src="./static/crypto-js.min.js"></script>
@@ -4628,7 +4684,7 @@
                   <i class="ri-wechat-pay-line"></i>
                 </div>
                 <div class="support-title">微信打赏</div>
-                <div class="support-sub">您的支持是开源动力 ❤️</div>
+                <div class="support-sub">扫码请作者喝杯咖啡 ☕</div>
                 <div class="${qrFrame}">
                   <img src="${wechatPaySrc}" alt="微信收款码" class="${qrImg}"
                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'" />
